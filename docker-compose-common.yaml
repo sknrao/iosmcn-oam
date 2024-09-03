@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+services:
+
+  gateway:
+    image: ${TRAEFIK_IMAGE}
+    container_name: gateway
+    hostname: gateway
+    healthcheck:
+      test:
+        - CMD
+        - traefik
+        - healthcheck
+        - --ping
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+      - 4334:4334
+      - 4335:4335
+    command:
+      - --serverstransport.insecureskipverify=true
+      - --log.level=${TRAEFIK_LOG_LEVEL}
+      - --global.sendanonymoususage=false
+      - --global.checkNewVersion=false
+      - --api.insecure=true
+      - --api.dashboard=true
+      - --api.debug=true
+      - --ping
+      - --accesslog=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls.domains[0].main=gateway.${HTTP_DOMAIN}
+      - --entrypoints.websecure.http.tls.domains[0].sans=*.${HTTP_DOMAIN}
+      - --entrypoints.ssh-netconf-callhome.address=:4334
+      - --entrypoints.tls-netconf-callhome.address=:4335
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.docker.network=${TRAEFIK_NETWORK_NAME}
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.watch=true
+      - --providers.file.filename=/middleware.yaml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/gateway/conf/middleware.yaml:/middleware.yaml:ro
+      - ./config/gateway/conf/.htpasswd:/.htpasswd:ro
+    labels:
+      traefik.enable: true
+      traefik.http.middlewares.traefik-auth.basicauth.usersfile: .htpasswd
+      traefik.http.routers.gateway.rule: Host(`gateway.${HTTP_DOMAIN}`)
+      traefik.http.routers.gateway.entrypoints: websecure
+      traefik.http.routers.gateway.service: api@internal
+      traefik.http.routers.gateway.middlewares: strip
+      traefik.http.middlewares.strip.stripprefix.prefixes: /traefik
+      traefik.http.routers.gateway.tls: true
+      traefik.http.services.gateway.loadbalancer.server.port: 8080
+    networks:
+      dmz:
+      smo:
+      oam:
+
+  persistence:
+    image: ${PERSISTENCE_IMAGE}
+    container_name: persistence
+    environment:
+      - discovery.type=single-node
+    networks:
+      smo:
+
+networks:
+  dmz:
+    name: dmz
+    driver: bridge
+    enable_ipv6: false
+  smo:
+    name: smo
+    driver: bridge
+    enable_ipv6: false
+  oam:
+    driver: bridge
+    name: oam
+    enable_ipv6: false

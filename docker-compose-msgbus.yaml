@@ -1,0 +1,158 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+networks:
+  smo:
+    external: true
+  dmz:
+    external: true
+
+services:
+  zookeeper:
+    image: ${STRIMZI_IMAGE}
+    command: [
+        "sh", "-c",
+        "bin/zookeeper-server-start.sh config/zookeeper.properties"
+      ]
+    ports:
+      - '2181:2181'
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      LOG_DIR: /tmp/logs
+    labels:
+      - "ranpm=yes"
+    networks:
+      smo:
+    
+
+  kafka:
+    image: ${STRIMZI_IMAGE}
+    container_name: common-kafka-1-1
+    command: [
+      "sh", "-c",
+      "bin/kafka-server-start.sh /tmp/kafka/strimzi.properties"
+    ]
+    environment:
+      LOG_DIR: /tmp/logs
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9097:9097"
+    labels:
+      - "ranpm=yes"
+    volumes:
+      - ./config/kafka/strimzi.properties:/tmp/kafka/strimzi.properties
+    networks:
+      smo:
+
+  redpanda:
+    container_name: redpanda-console
+    image: ${REDPANDA_IMAGE}
+    restart: on-failure
+    hostname: redpanda-console
+    ports:
+    - "8780:8080"
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERS: kafka:9092
+    labels:
+      traefik.enable: true
+      traefik.http.routers.redpanda.entrypoints: websecure
+      traefik.http.routers.redpanda.rule: Host(`redpanda.${HTTP_DOMAIN}`)
+      traefik.http.routers.redpanda.tls: false
+      traefik.http.services.redpanda.loadbalancer.server.port: true
+    networks:
+      smo:
+
+  messages:
+    container_name: messages
+    image: ${DMAAP_IMAGE}
+    hostname: messages
+    ports:
+      - 3904:3904
+      - 3905:3905
+    environment:
+      enableCadi: 'false'
+    volumes:
+      - ./config/dmaap/MsgRtrApi.properties:/appl/dmaapMR1/bundleconfig/etc/appprops/MsgRtrApi.properties
+      - ./config/dmaap/logback.xml:/appl/dmaapMR1/bundleconfig/etc/logback.xml
+    depends_on:
+      - zookeeper
+      - kafka
+    labels:
+      traefik.enable: true
+      traefik.http.routers.messages.entrypoints: websecure
+      traefik.http.routers.messages.rule: Host(`messages.${HTTP_DOMAIN}`)
+      traefik.http.routers.messages.tls: true
+      traefik.http.services.messages.loadbalancer.server.port: 3904
+    networks:
+      dmz:
+      smo:
+
+  minio:
+    image: ${MINIO_IMAGE}
+    container_name: minio-server
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: adminadmin
+    ports:
+    - 9000:9000
+    - 9001:9001
+    labels:
+      traefik.enable: true
+      traefik.http.routers.minio.entrypoints: websecure
+      traefik.http.routers.minio.rule: Host(`minio.${HTTP_DOMAIN}`)
+      traefik.http.routers.minio.tls: false
+      traefik.http.services.minio.loadbalancer.server.port: 9001
+    volumes:
+    - /tmp/minio-test/0:/data
+    networks:
+      smo:
+
+  ics:
+    image: ${ICS_IMAGE}
+    container_name: ics
+    volumes:
+    - ./config/ics/application.yaml:/opt/app/information-coordinator-service/config/application.yaml
+    ports:
+    - 8083:8083
+    - 8434:8434
+    labels:
+      - "ranpm=yes"
+    networks:
+      smo:
+
+  nonrtric-gateway:
+    image: ${NONRTRIC_GATEWAY_IMAGE}
+    container_name: nonrtricgateway
+    depends_on:
+      - ics
+    ports:
+    - 9098:9090
+    volumes:
+    - ./config/ngw/application.yaml:/opt/app/nonrtric-gateway/config/application.yaml
+    labels:
+      - "ranpm=yes"
+    networks:
+      smo:
+
+  control-panel:
+    image: ${CONTROL_PANEL_IMAGE}
+    container_name: controlpanel
+    depends_on:
+      - nonrtric-gateway
+    ports:
+    - 8088:8080
+    volumes:
+    - ./config/control-panel/nginx.conf:/etc/nginx/nginx.conf
+    labels:
+      traefik.enable: true
+      traefik.http.routers.nrtcp.entrypoints: websecure
+      traefik.http.routers.nrtcp.rule: Host(`nrtcp.${HTTP_DOMAIN}`)
+      traefik.http.routers.nrtcp.tls: false
+      traefik.http.services.nrtcp.loadbalancer.server.port: 8080
+    networks:
+      smo:

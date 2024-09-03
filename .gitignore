@@ -1,0 +1,9 @@
+.sec*
+.admin_token
+.json*
+*_gen.yaml
+jwt.txt
+*.p12
+rootCA*
+cert-*
+*.swp

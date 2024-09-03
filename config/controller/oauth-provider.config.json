@@ -1,0 +1,9 @@
+{
+  "tokenSecret": "my-secret",
+  "tokenIssuer": "ONAP-SDNC",
+  "publicUrl": "https://odlux.oam.maya.iosmcn.org",
+  "redirectUri": "/odlux/index.html#/oauth?token=",
+  "supportOdlUsers": "true",
+  "providers": [
+	]
+}
