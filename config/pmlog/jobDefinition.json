@@ -1,18 +1,12 @@
 {
-   "info_type_id": "PmData",
-   "job_owner": "console",
+   "info_type_id": "PmDataOverKafka",
+   "job_id":"pmLogger",
+   "job_owner": "owner",
    "job_definition": {
       "filter": {
          "sourceNames": [],
          "measObjInstIds": [],
-         "measTypeSpecs": [
-            {
-               "measuredObjClass": "NRCellDU",
-               "measTypes": [
-                  "pmCounterNumber108"
-               ]
-            }
-         ],
+         "measTypeSpecs": [],
          "measuredEntityDns": []
       },
       "deliveryInfo": {
