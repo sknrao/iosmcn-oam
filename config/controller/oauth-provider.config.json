@@ -1,7 +1,7 @@
 {
   "tokenSecret": "my-secret",
   "tokenIssuer": "ONAP-SDNC",
-  "publicUrl": "https://odlux.oam.drona.iosmcn.org",
+  "publicUrl": "https://odlux.oam.smo.iosmcn.org",
   "redirectUri": "/odlux/index.html#/oauth?token=",
   "supportOdlUsers": "true",
   "providers": [
