@@ -16,11 +16,6 @@ check_error() {
 }
 
 setup_system() {
-if ! command -v keytool &> /dev/null
-then
-	echo "Keytool is not found please use sudo apt-get install default-jre"
-	exit 1
-fi
 if ! command -v docker &> /dev/null
 then
 	echo "Docker is not found please install"
@@ -198,9 +193,6 @@ check_error $?
 
 create_topics
 
-setup_controller_collector
-check_error $?
-
 setup_dfc
 check_error $?
 
@@ -230,4 +222,7 @@ echo $INFLUXDB2_TOKEN
 export INFLUXDB2_TOKEN
 
 setup_pmlog
+check_error $?
+
+setup_controller_collector
 check_error $?
