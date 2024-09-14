@@ -9,3 +9,4 @@ cert-*
 **/*.bolt
 *.sqlite3
 **/jwt.txt
+**/build

@@ -1,0 +1,28 @@
+﻿IMAGE,PORTS,NAMES
+nexus3.onap.org:10001/onap/sdnc-web-image:2.6.1,"8080/tcp, 8443/tcp",odlux
+nexus3.onap.org:10002/onap/org.onap.dcaegen2.collectors.ves.vescollector:1.12.3-configured,"0.0.0.0:8080->8080/tcp, :::8080->8080/tcp, 8443/tcp",ves-collector
+nexus3.onap.org:10001/onap/sdnc-image:2.6.1,"0.0.0.0:18080->8080/tcp, [::]:18080->8080/tcp, 0.0.0.0:18181->8181/tcp, [::]:18181->8181/tcp, 0.0.0.0:18182->8182/tcp, [::]:18182->8182/tcp",controller
+nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-pmlog:1.0.0,"8435/tcp, 0.0.0.0:8436->8436/tcp, :::8436->8436/tcp, 0.0.0.0:8184->8084/tcp, [::]:8184->8084/tcp",pmlog-0
+nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-auth-token-fetch:1.1.1,,logger-auth-token-file-pmlog-0-1
+influxdb:2.6.1,"0.0.0.0:8086->8086/tcp, :::8086->8086/tcp",influxdb2
+nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-pmproducer:1.0.1,"0.0.0.0:8084->8084/tcp, :::8084->8084/tcp, 8435/tcp",pm-producer-json2kafka
+nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-ranpm-pm-file-converter:1.0.1,"0.0.0.0:9881->80/tcp, [::]:9881->80/tcp",kafka-producer-pm-xml2json-0
+nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-auth-token-fetch:1.1.1,,producers-auth-token-file-pm-producer-json2kafka-1
+nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-ranpm-datafilecollector:1.0.0,"8100/tcp, 0.0.0.0:8433->8433/tcp, :::8433->8433/tcp",dfc
+nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-auth-token-fetch:1.1.1,,dfc-auth-token-file-dfc-1
+nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-controlpanel:2.5.0,"80/tcp, 0.0.0.0:8088->8080/tcp, [::]:8088->8080/tcp",controlpanel
+nexus3.onap.org:10002/onap/dmaap/dmaap-mr:1.4.4,"0.0.0.0:3904-3905->3904-3905/tcp, :::3904-3905->3904-3905/tcp",messages
+redpandadata/console:v2.2.3,"0.0.0.0:8780->8080/tcp, [::]:8780->8080/tcp",redpanda-console
+quay.io/strimzi/kafka:0.35.0-kafka-3.4.0,"0.0.0.0:9092->9092/tcp, :::9092->9092/tcp, 0.0.0.0:9097->9097/tcp, :::9097->9097/tcp",common-kafka-1-1
+nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-gateway:1.2.0,"0.0.0.0:9098->9090/tcp, [::]:9098->9090/tcp",nonrtricgateway
+quay.io/strimzi/kafka:0.35.0-kafka-3.4.0,"0.0.0.0:2181->2181/tcp, :::2181->2181/tcp",msgbus-zookeeper-1
+nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-informationcoordinatorservice:1.5.0,"0.0.0.0:8083->8083/tcp, :::8083->8083/tcp, 0.0.0.0:8434->8434/tcp, :::8434->8434/tcp",ics
+minio/minio,"0.0.0.0:9000-9001->9000-9001/tcp, :::9000-9001->9000-9001/tcp",minio-server
+quay.io/keycloak/keycloak:20.0.1,"0.0.0.0:8462->8080/tcp, [::]:8462->8080/tcp, 0.0.0.0:8463->8443/tcp, [::]:8463->8443/tcp",keycloak
+openpolicyagent/opa:latest-envoy,"0.0.0.0:8181->8181/tcp, :::8181->8181/tcp",opa-kafka
+bitnami/postgresql:13,5432/tcp,identitydb
+nginx:1.21,"0.0.0.0:1080->80/tcp, [::]:1080->80/tcp",bundle-server
+logging-fluentd,"5140/tcp, 0.0.0.0:24224->24224/tcp, 0.0.0.0:24224->24224/udp, :::24224->24224/tcp, :::24224->24224/udp",fluentd
+docker.elastic.co/kibana/kibana-oss:7.10.2,"0.0.0.0:5601->5601/tcp, :::5601->5601/tcp",kibana
+docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2,"0.0.0.0:9200->9200/tcp, :::9200->9200/tcp, 9300/tcp",persistence
+traefik:v2.9.6,"0.0.0.0:80->80/tcp, :::80->80/tcp, 0.0.0.0:443->443/tcp, :::443->443/tcp, 0.0.0.0:4334-4335->4334-4335/tcp, :::4334-4335->4334-4335/tcp",gateway
