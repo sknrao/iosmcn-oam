@@ -98,7 +98,7 @@ app:
   pm-files-path: /pm-files
   zip-output: false
   s3:
-    endpointOverride:
+    endpointOverride: http://minio-server:9000
     accessKeyId: admin
     secretAccessKey: adminadmin
     locksBucket: pm-files-json-locks

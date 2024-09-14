@@ -63,24 +63,11 @@ services:
       smo:
       oam:
 
-  persistence:
-    image: ${PERSISTENCE_IMAGE}
-    container_name: persistence
-    environment:
-      - discovery.type=single-node
-    networks:
-      smo:
 
 networks:
   dmz:
-    name: dmz
-    driver: bridge
-    enable_ipv6: false
+    external: true
   smo:
-    name: smo
-    driver: bridge
-    enable_ipv6: false
+    external: true
   oam:
-    driver: bridge
-    name: oam
-    enable_ipv6: false
+    external: true

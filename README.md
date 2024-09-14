@@ -118,7 +118,7 @@ python3 adapt-to-environment.py -i <deployment-system-ipv4> -d <domain-name>
 ```
 ./docker-setup.sh
 ```
-### Bring Up Solution
+### Bring Down Solution
 ```
 ./docker-tear-down.sh
 ```

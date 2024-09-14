@@ -104,15 +104,33 @@ export PMLOG_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
 }
 
 setup_common() {
-echo "Starting containers for gateway and persistence"
+echo "Starting containers for gateway"
 envsubst  < docker-compose-common.yaml > docker-compose-common_gen.yaml
 docker compose -p gateway -f docker-compose-common_gen.yaml up -d
+}
+
+setup_logging() {
+echo "Starting containers for Logging"
+envsubst  < docker-compose-logging.yaml > docker-compose-logging_gen.yaml
+docker compose -p logging -f docker-compose-logging_gen.yaml up -d
 }
 
 setup_kafka() {
 echo "Starting containers for: kafka, zookeeper, kafka client, minio"
 envsubst  < docker-compose-msgbus.yaml > docker-compose-msgbus_gen.yaml
 docker compose -p msgbus -f docker-compose-msgbus_gen.yaml up -d
+}
+
+create_docker_networks() {
+echo "Creating Docker Netowrks: $DNETWORKS"
+for net in $DNETWORKS; do
+    docker network inspect $net 2> /dev/null 1> /dev/null
+    if [ $? -ne 0 ]; then
+        docker network create $net
+    else
+        echo "  Network: $net exits"
+    fi
+done
 }
 
 create_topics() {
@@ -166,12 +184,19 @@ docker compose -p logger -f docker-compose-pmlog_gen.yaml up -d
 ## MAIN #####
 export KAFKA_NUM_PARTITIONS=10
 export TOPICS="file-ready collected-file json-file-ready-kp json-file-ready-kpadp pmreports"
+export DNETWORKS="smo oam dmz"
 
 setup_system
 
 setup_init
 
+create_docker_networks
+check_error $?
+
 setup_common
+check_error $?
+
+setup_logging
 check_error $?
 
 setup_keycloak

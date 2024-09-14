@@ -24,6 +24,11 @@ services:
     depends_on:
       controller:
         condition: service_healthy
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: odlux
     networks:
       dmz:
       smo:
@@ -74,6 +79,10 @@ services:
       - ./config/controller/mountpoint-registrar.properties:/opt/opendaylight/etc/mountpoint-registrar.properties
       - ./config/controller/certs/certs.properties:${SDNC_CERT_DIR}/certs.properties
       - ./config/controller/certs/keys0.zip:${SDNC_CERT_DIR}/keys0.zip    
+    ports:
+      - "18181:8181"
+      - "18182:8182"
+      - "18080:8080"
     labels:
       traefik.enable: true
       traefik.http.routers.controller.entrypoints: websecure
@@ -92,6 +101,11 @@ services:
       traefik.tcp.routers.controller-tls.tls: false
       traefik.tcp.routers.controller-tls.service: controller-tls
       traefik.tcp.services.controller-tls.loadbalancer.server.port: 4335
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: sdnc
     networks:
       smo:
       oam:
@@ -114,6 +128,8 @@ services:
       retries: 5
     environment:
       DMAAPHOST: messages
+    ports:
+      - "8080:8080"
     volumes:
       - ./config/ves-collector/collector.properties:/opt/app/VESCollector/etc/collector.properties
       - ./config/ves-collector/ves-dmaap-config.json:/opt/app/VESCollector/etc/ves-dmaap-config.json
@@ -123,6 +139,11 @@ services:
       traefik.http.routers.ves.rule: Host(`ves-collector.dcn.${HTTP_DOMAIN}`)
       traefik.http.routers.ves.tls: true
       traefik.http.services.ves.loadbalancer.server.port: ${VES_ENDPOINT_PORT}
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: ves
     networks:
       smo:
       oam:

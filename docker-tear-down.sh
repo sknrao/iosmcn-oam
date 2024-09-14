@@ -26,6 +26,7 @@ docker compose -p dfc -f docker-compose-dfc_gen.yaml down
 docker compose -p msgbus -f docker-compose-msgbus_gen.yaml down
 docker compose -p security -f docker-compose-security_gen.yaml down
 docker compose -p sdn -f docker-compose-concol_gen.yaml down
+docker compose -p logging -f docker-compose-logging_gen.yaml down
 docker compose -p gateway -f docker-compose-common_gen.yaml down
 
 unset $(grep -v '^#' .env | awk 'BEGIN { FS = "=" } ; { print $1 }')

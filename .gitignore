@@ -5,6 +5,7 @@
 *.p12
 rootCA*
 cert-*
-*.swp
-*.bolt
+**/*.swp
+**/*.bolt
 *.sqlite3
+**/jwt.txt
