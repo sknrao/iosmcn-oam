@@ -10,6 +10,7 @@ OAM Operation and Maintenance
    :caption: Contents:
 
    overview.rst
+   cfmgmt.rst
    pmfilemgmt.rst
    user-guide.rst
    developer-guide.rst
