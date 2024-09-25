@@ -2,7 +2,6 @@
 .admin_token
 .json*
 *_gen.yaml
-*.p12
 rootCA*
 cert-*
 **/*.swp
