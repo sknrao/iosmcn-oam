@@ -94,7 +94,7 @@ app:
       trust-store-type: PEM
       trust-store-location:
   influx:
-    url: http://influxdb2-0:8086
+    url: http://influxdb2:8086
     # Override by env var
     access-token:
     bucket: pm-logg-bucket
