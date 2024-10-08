@@ -98,7 +98,7 @@ app:
     # Override by env var
     access-token:
     bucket: pm-logg-bucket
-    org: est
+    org: iosmcn
     # The user, password and database can be blank if the access-token is defined
     user:
     password:

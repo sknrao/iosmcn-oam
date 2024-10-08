@@ -24,6 +24,8 @@ services:
     depends_on:
       controller:
         condition: service_healthy
+    ports:
+      - "8888:8080"
     logging:
       driver: "fluentd"
       options:
