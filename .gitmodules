@@ -1,0 +1,18 @@
+[submodule "deps/ves-collector"]
+	path = deps/ves-collector
+	url = https://github.com/onap/dcaegen2-collectors-ves.git
+[submodule "deps/sdnc-oam"]
+	path = deps/sdnc-oam
+	url = https://github.com/onap/sdnc-oam.git
+[submodule "deps/ranpm"]
+	path = deps/ranpm
+	url = https://github.com/o-ran-sc/nonrtric-plt-ranpm.git
+[submodule "deps/cp-gw"]
+	path = deps/cp-gw
+	url = https://github.com/o-ran-sc/portal-nonrtric-controlpanel.git
+[submodule "deps/auth-token"]
+	path = deps/auth-token
+	url = https://github.com/o-ran-sc/nonrtric.git
+[submodule "deps/ics"]
+	path = deps/ics
+	url = https://github.com/o-ran-sc/nonrtric-plt-informationcoordinatorservice.git
