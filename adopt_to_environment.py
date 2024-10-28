@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ################################################################################
 # Copyright 2023 highstreet technologies GmbH
 #
@@ -41,6 +41,8 @@ def find_replace(directory, find_text, replace_text, extensions):
     for root, dirs, files in os.walk(directory):
         for file_name in files:
             file_path = os.path.join(root, file_name)
+            if '/deps/' in file_path:
+                continue
             file_ext = os.path.splitext(file_name)[1]
             if file_ext in extensions or file_name in extensions:
                 with open(file_path, 'r') as file:
