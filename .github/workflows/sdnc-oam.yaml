@@ -53,11 +53,11 @@ jobs:
        
     - name: Tag & Push Docker Images
       run: |
-        docker tag onap/sdnc-image:2.6.1-SNAPSHOT-latest ghcr.io/sknrao/sdnc-image:2.6.1
-        docker tag onap/sdnc-image:latest ghcr.io/sknrao/sdnc-image:latest
-        docker tag onap/sdnc-web-image:2.6.1-SNAPSHOT-latest ghcr.io/sknrao/sdnc-web-image:2.6.1
-        docker tag onap/sdnc-web-image:latest ghcr.io/sknrao/sdnc-web-image:latest
-        docker push ghcr.io/sknrao/sdnc-image:2.6.1
-        docker push ghcr.io/sknrao/sdnc-image:latest
-        docker push ghcr.io/sknrao/sdnc-web-image:2.6.1
-        docker push ghcr.io/sknrao/sdnc-web-image:latest
+        docker tag onap/sdnc-image:2.6.1-SNAPSHOT-latest ghcr.io/ios-mcn-smo/sdnc-image:2.6.1
+        docker tag onap/sdnc-image:latest ghcr.io/ios-mcn-smo/sdnc-image:latest
+        docker tag onap/sdnc-web-image:2.6.1-SNAPSHOT-latest ghcr.io/ios-mcn-smo/sdnc-web-image:2.6.1
+        docker tag onap/sdnc-web-image:latest ghcr.io/ios-mcn-smo/sdnc-web-image:latest
+        docker push ghcr.io/ios-mcn-smo/sdnc-image:2.6.1
+        docker push ghcr.io/ios-mcn-smo/sdnc-image:latest
+        docker push ghcr.io/ios-mcn-smo/sdnc-web-image:2.6.1
+        docker push ghcr.io/ios-mcn-smo/sdnc-web-image:latest
