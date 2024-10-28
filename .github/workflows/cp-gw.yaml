@@ -1,0 +1,82 @@
+name: Submodule cp-gw CI
+
+on:
+  push:
+    branches:
+      - devops
+  workflow_dispatch:
+
+env:
+  GHCR_REGISTRY: ghcr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    # Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    # Set up Java 
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Download settings.xml at .m2 Directory
+      run: |
+        cd 
+        ls -la
+        cd .m2
+        rm settings.xml
+        wget https://git.onap.org/oparent/plain/settings.xml
+        ls -la
+        
+    - name: Build cp-gw Docker Images
+      run: |
+        ls -la
+        cd deps
+        ls -la
+        cd cp-gw
+        ls -la
+        cd nonrtric-gateway
+        ls -la
+        mvn clean install
+        docker build -t o-ran-sc/nonrtric-gateway .
+        
+
+    - name: Build cp-gw Docker Images
+      run: |
+        ls -la
+        cd deps
+        ls -la
+        cd cp-gw
+        ls -la
+        cd webapp-frontend
+        ls -la
+        mvn clean install
+
+    - name: Show The Build Docker Images
+      run: |
+        docker images
+
+    - name: Login to GitHub Container Registry (ghcr.io) for push
+      uses: docker/login-action@v3.1.0
+      with:
+        registry: ${{ env.GHCR_REGISTRY }}
+        username: ${{ secrets.GHCRUSER }}
+        password: ${{ secrets.GHCRPASS }}
+
+    - name: Tag & Push Docker Images
+      run: |
+        docker tag o-ran-sc/nonrtric-controlpanel:latest ghcr.io/ios-mcn-smo/nonrtric-controlpanel:latest
+        docker tag o-ran-sc/nonrtric-gateway:latest ghcr.io/ios-mcn-smo/nonrtric-gateway:latest
+        docker tag o-ran-sc/nonrtric-controlpanel:latest ghcr.io/ios-mcn-smo/nonrtric-controlpanel:2.5.0
+        docker tag o-ran-sc/nonrtric-gateway:latest ghcr.io/ios-mcn-smo/nonrtric-gateway:1.2.0
+        docker push ghcr.io/ios-mcn-smo/nonrtric-gateway:latest
+        docker push ghcr.io/ios-mcn-smo/nonrtric-controlpanel:latest
+        docker push ghcr.io/ios-mcn-smo/nonrtric-gateway:1.2.0
+        docker push ghcr.io/ios-mcn-smo/nonrtric-controlpanel:2.5.0

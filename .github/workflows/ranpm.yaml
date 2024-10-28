@@ -1,0 +1,95 @@
+name: Submodule ranpm CI
+
+on:
+  workflow_dispatch:
+
+env:
+  GHCR_REGISTRY: ghcr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    # Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    # Set up Java 
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Download settings.xml at .m2 Directory
+      run: |
+        cd 
+        ls -la
+        cd .m2
+        rm settings.xml
+        wget https://git.onap.org/oparent/plain/settings.xml
+        ls -la
+        
+    - name: Install xmlstarlet
+      run: |
+        sudo apt install xmlstarlet -y
+        
+    - name: Build ranpm Docker Images For Directory pmproducer
+      run: |
+        ls -la
+        cd deps/ranpm
+        ls -la
+        cd pmproducer
+        ls -la
+        mvn clean install -Dmaven.test.skip=true
+        mvn install docker:build -Dmaven.test.skip=true
+
+    - name: Build ranpm Docker Images For Directory influxlogger
+      run: |
+        ls -la
+        cd deps/ranpm
+        ls -la
+        cd influxlogger
+        ls -la
+        mvn clean install -Dmaven.test.skip=true
+        mvn install docker:build -Dmaven.test.skip=true
+
+    - name: Build ranpm Docker Images For Directory pm-file-converter
+      run: |
+        ls -la
+        cd deps/ranpm
+        ls -la
+        cd pm-file-converter
+        ls -la
+        cat build.sh
+        chmod +x build.sh
+        ./build.sh no-push
+        docker tag pm-file-converter:latest ghcr.io/ios-mcn-smo/pm-file-converter:1.2.0
+
+    - name: Show The Build Docker Images
+      run: |
+        docker images
+
+    - name: Login to GitHub Container Registry (ghcr.io) for push
+      uses: docker/login-action@v3.1.0
+      with:
+        registry: ${{ env.GHCR_REGISTRY }}
+        username: ${{ secrets.GHCRUSER }}
+        password: ${{ secrets.GHCRPASS }}
+
+    - name: Tag & Push Docker Images
+      run: |
+        docker tag o-ran-sc/nonrtric-plt-pmproducer:latest ghcr.io/ios-mcn-smo/nonrtric-plt-pmproducer:latest
+        docker tag o-ran-sc/nonrtric-plt-pmproducer:latest ghcr.io/ios-mcn-smo/nonrtric-plt-pmproducer:1.0.1 
+        docker tag o-ran-sc/nonrtric-plt-pmlog:latest ghcr.io/ios-mcn-smo/nonrtric-plt-pmlog:latest
+        docker tag o-ran-sc/nonrtric-plt-pmlog:latest ghcr.io/ios-mcn-smo/nonrtric-plt-pmlog:1.0.0
+        docker tag pm-file-converter:latest ghcr.io/ios-mcn-smo/pm-file-converter:1.2.0
+        docker tag pm-file-converter:latest ghcr.io/ios-mcn-smo/pm-file-converter:latest
+        docker push ghcr.io/ios-mcn-smo/nonrtric-plt-pmproducer:latest
+        docker push ghcr.io/ios-mcn-smo/nonrtric-plt-pmproducer:1.0.1
+        docker push ghcr.io/ios-mcn-smo/nonrtric-plt-pmlog:latest
+        docker push ghcr.io/ios-mcn-smo/nonrtric-plt-pmlog:1.0.0
+        docker push ghcr.io/ios-mcn-smo/pm-file-converter:1.2.0
+        docker push ghcr.io/ios-mcn-smo/pm-file-converter:latest
