@@ -71,9 +71,11 @@ jobs:
         run: |
           docker tag o-ran-sc/nonrtric-plt-ranpm-datafilecollector:1.2.0-SNAPSHOT ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}/datafile-collector:1.2.0-SNAPSHOT
           docker tag o-ran-sc/nonrtric-plt-ranpm-datafilecollector:1.2.0-SNAPSHOT ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}/datafile-collector:latest
+          docker tag o-ran-sc/nonrtric-plt-ranpm-datafilecollector:1.2.0-SNAPSHOT ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}/datafile-collector:0.0.1
 
       # Push Docker image to GitHub Container Registry (GHCR)
       - name: Push Docker image to GHCR
         run: |
           docker push ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}/datafile-collector:1.2.0-SNAPSHOT
           docker push ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}/datafile-collector:latest
+          docker push ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}/datafile-collector:0.0.1
