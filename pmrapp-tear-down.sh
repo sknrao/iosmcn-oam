@@ -17,20 +17,10 @@
 #  ============LICENSE_END=================================================
 #
 
-echo "Stop and remove all containers in the project"
+echo "Stop and remove all pm-rapp containers in the project"
 
-docker compose -p logger -f docker-compose-pmlog_gen.yaml down
-docker compose -p influx -f docker-compose-influxdb_gen.yaml down
-docker compose -p producers -f docker-compose-producers_gen.yaml down
-docker compose -p dfc -f docker-compose-dfc_gen.yaml down
-docker compose -p msgbus -f docker-compose-msgbus_gen.yaml down
-docker compose -p security -f docker-compose-security_gen.yaml down
-docker compose -p sdn -f docker-compose-concol_gen.yaml down
-docker compose -p logging -f docker-compose-logging_gen.yaml down
-docker compose -p gateway -f docker-compose-common_gen.yaml down
+docker stop $(docker ps -qa  --filter "label=ranpmrapp")  2> /dev/null
+docker stop $(docker ps -qa  --filter "label=ranpmrapp")  2> /dev/null
+docker rm -f $(docker ps -qa  --filter "label=ranpmrapp")  2> /dev/null
 
-echo "Removing influxdb2 config..."
-rm -rf ./config/influxdb2
-
-unset $(grep -v '^#' .env | awk 'BEGIN { FS = "=" } ; { print $1 }')
-echo "All clear now!"
+docker compose -f docker-compose-pmrapp_gen.yaml -p pmrapp down

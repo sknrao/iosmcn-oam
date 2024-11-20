@@ -43,7 +43,7 @@ JOB='{
        "job_owner": "console",
        "job_definition": {
           "filter": {
-             "sourceNames": ["gNB-Eurecom-5GNRBox-00002"],
+             "sourceNames": [],
              "measObjInstIds": [],
              "measTypeSpecs": [],
              "measuredEntityDns": []
