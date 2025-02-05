@@ -20,7 +20,7 @@ import argparse
 from jinja2 import Template
 
 default_ip_address = 'aaa.bbb.ccc.ddd'
-default_http_domain = 'smo.iosmcn.org'
+default_http_domain = 'smo.o-ran-sc.org'
 
 script_name = os.path.basename(__file__)
 directory_path = os.path.dirname(__file__)
