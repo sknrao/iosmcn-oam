@@ -18,6 +18,8 @@
 networks:
   smo:
     external: true
+  oam:
+    external: true
 
 services:
   auth-token-file-dfc:
@@ -34,6 +36,7 @@ services:
       - "ranpm=yes"
     networks:
       smo:
+      oam:
 
   dfc:
     container_name: dfc
@@ -53,3 +56,4 @@ services:
       - "ranpm=yes"
     networks:
       smo:
+      oam:

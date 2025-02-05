@@ -59,7 +59,8 @@ app:
     collected-file-topic: collected-file
     client-id: datafile-1
     # input topic
-    file-ready-event-topic: unauthenticated.SEC_3GPP_PERFORMANCEASSURANCE_OUTPUT
+    #file-ready-event-topic: unauthenticated.SEC_3GPP_PERFORMANCEASSURANCE_OUTPUT,file-ready
+    file-ready-event-topic: file-ready
     use-oath-token: true
     ssl:
       key-store-type: PEM

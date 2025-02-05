@@ -94,7 +94,7 @@
     "type": "message_router",
     "dmaap_info": {
       "location": "mtl5",
-      "topic_url": "http://messages:3904/events/unauthenticated.SEC_3GPP_PERFORMANCEASSURANCE_OUTPUT/"
+      "topic_url": "http://messages:3904/events/file-ready/"
     }
   },
   "ves-syslog-secondary": {
