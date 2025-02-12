@@ -114,9 +114,19 @@ $ cat /etc/hosts
 ```
 python3 adapt-to-environment.py -i <deployment-system-ipv4> -d <domain-name>
 ``` 
-2. Run the following command
+2. Run the following command - starts the SMO and Non-RT RIC framework
 ```
 ./docker-setup.sh
+```
+
+3. Run the following command - creates a PM Job
+```
+./update-pmlog.sh
+```
+
+4. Run the following command - start the dummy PM rApp
+```
+./pmrapp-setup.sh
 ```
 ### Bring Down Solution
 ```
