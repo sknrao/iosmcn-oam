@@ -61,9 +61,15 @@ var rapp_id = os.Getenv("APPID")
 
 var rapp_ns = os.Getenv("APPNS")
 
-var bootstrapserver = os.Getenv("KAFKA_SERVER")
+// will be assigned during init
+var bootstrapserver = ""
+var bootstrapserver_without_port = os.Getenv("KAFKA_SERVER")
+
+var producer_port = os.Getenv("PRODUCER_PORT")
+var consumer_port = os.Getenv("CONSUMER_PORT")
 
 var topic = os.Getenv("TOPIC")
+var es_topic = os.Getenv("ES_TOPIC")
 
 var ics_server = os.Getenv("ICS")
 
@@ -121,13 +127,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	if bootstrapserver == "" {
+	if consumer_port == "" {
+		log.Error("Env CONSUMER_PORT not set")
+		os.Exit(1)
+	}
+
+	if producer_port == "" {
+		log.Error("Env PRODUCER_PORT not set")
+		os.Exit(1)
+	}
+
+	if bootstrapserver_without_port == "" {
 		log.Error("Env KAFKA_SERVER not set")
 		os.Exit(1)
+	} else {
+		// bootstrap will be used in all cases, except for one case where Kafka Producer is used and thus a different port is needed
+		bootstrapserver = bootstrapserver_without_port + ":" + consumer_port
 	}
 
 	if topic == "" {
 		log.Error("Env TOPIC not set")
+		os.Exit(1)
+	}
+
+	if es_topic == "" {
+		log.Error("Env ES_TOPIC not set")
 		os.Exit(1)
 	}
 
@@ -680,8 +704,16 @@ func read_bridge_messages() {
 
 func read_kafka_messages() {
 	var c *kafka.Consumer = nil
-	log.Info("Creating kafka consumer...")
+	var p *kafka.Producer = nil
 	var err error
+	log.Info("Creating kafka producer...")
+	p, err = kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": bootstrapserver_without_port+":"+producer_port})
+	if err != nil {
+		log.Info("Producer creation FAILED!")
+	}
+	defer p.Close()
+
+	log.Info("Creating kafka consumer...")
 	for c == nil {
 		if jwt_file == "" && creds_service_url == "" {
 			if ssl_path == "" {
@@ -800,9 +832,17 @@ func read_kafka_messages() {
 				if err := json.Indent(buf, *pdata, "", " "); err != nil {
 					log.Warning("Received msg not json?")
 				} else {
-					fmt.Println(buf.String())
+					fmt.Println("Received data: " + buf.String())
 					msg_count++
 					fmt.Println("Number of received json msgs: " + strconv.Itoa(msg_count))
+					log.Info("Sending data to ES-RAPP using topic: " + es_topic)
+					err = p.Produce(&kafka.Message{
+							TopicPartition: kafka.TopicPartition{Topic: &es_topic, Partition: kafka.PartitionAny},
+							Value: buf.Bytes(), Key: nil}, nil)
+					if err != nil {
+						log.Error("Failed to send message to ES-RAPP.")
+					}
+					log.Info("Message was sent out to ES-RAPP.")
 				}
 			}
 			c.Commit()

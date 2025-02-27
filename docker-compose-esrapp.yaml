@@ -1,5 +1,5 @@
 #  ============LICENSE_START===============================================
-#  Copyright (C) 2023 Nordix Foundation. All rights reserved.
+#  Copyright (C) 2023 Nordix Foundation and Tietoevry. All rights reserved.
 #  ========================================================================
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -21,28 +21,36 @@ networks:
     external: true
 
 services:
-  pm-rapp:
-    image: $PMRAPP_IMAGE
-    container_name: pm-rapp
+  es-rapp:
+    image: $ESRAPP_IMAGE
+    container_name: es-rapp
     environment:
-      APPID: pm-rapp
+      SDN_CONTROLLER_ADDRESS: "172.17.0.1"
+      SDN_CONTROLLER_PORT: '80'
+      SDN_CONTROLLER_USERNAME: 'root'
+      SDN_CONTROLLER_PASSWORD: 'viavi'
+      A1T_ADDRESS: '172.17.0.1'
+      A1T_PORT: '80'
+      LOAD_PREDICTOR: 'dummy'
+      LOAD_PREDICTOR_PORT: 'dummy'
+      LOAD_PREDICTOR_API: 'predict'
+      RANSIM_DATA_PATH: ''
+      APPID: es-rapp
       APPNS: 'nonrtric'
-      KAFKA_SERVER: kafka
-      CONSUMER_PORT: '9092'
-      PRODUCER_PORT: '9092'
+      KAFKA_SERVER: kafka:9097
       ICS: ics:8083
       TOPIC: pmreports
       ES_TOPIC: es-rapp-topic
       LOG_PAYLOAD: '1'
       GZIP: ''
       CREDS_GRANT_TYPE: client_credentials
-      CREDS_CLIENT_SECRET: $PMRAPP_CLIENT_SECRET
-      CREDS_CLIENT_ID: pm-rapp
-    volumes:
-    - ./config/pmrapp:/config
+      CREDS_CLIENT_SECRET: $ESRAPP_CLIENT_SECRET
+      CREDS_CLIENT_ID: es-rapp
+      FUNC: "f2"
+      AUTH_SERVICE_URL: http://keycloak:8080/realms/nonrtric-realm/protocol/openid-connect/token
     labels:
-      - "ranpm=yes"
-      - "ranpmrapp=yes"
+      - "ranes=yes"
+      - "ranesrapp=yes"
     networks:
       smo:
 

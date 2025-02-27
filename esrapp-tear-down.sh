@@ -1,5 +1,7 @@
+#!/bin/bash
+
 #  ============LICENSE_START===============================================
-#  Copyright (C) 2023 Nordix Foundation. All rights reserved.
+#  Copyright (C) 2023 Nordix Foundation and Tietoevry. All rights reserved.
 #  ========================================================================
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -15,34 +17,10 @@
 #  ============LICENSE_END=================================================
 #
 
-version: '3.0'
-networks:
-  smo:
-    external: true
+echo "Stop and remove all es-rapp containers in the project"
 
-services:
-  pm-rapp:
-    image: $PMRAPP_IMAGE
-    container_name: pm-rapp
-    environment:
-      APPID: pm-rapp
-      APPNS: 'nonrtric'
-      KAFKA_SERVER: kafka
-      CONSUMER_PORT: '9092'
-      PRODUCER_PORT: '9092'
-      ICS: ics:8083
-      TOPIC: pmreports
-      ES_TOPIC: es-rapp-topic
-      LOG_PAYLOAD: '1'
-      GZIP: ''
-      CREDS_GRANT_TYPE: client_credentials
-      CREDS_CLIENT_SECRET: $PMRAPP_CLIENT_SECRET
-      CREDS_CLIENT_ID: pm-rapp
-    volumes:
-    - ./config/pmrapp:/config
-    labels:
-      - "ranpm=yes"
-      - "ranpmrapp=yes"
-    networks:
-      smo:
+docker stop $(docker ps -qa  --filter "label=ranesrapp")  2> /dev/null
+docker stop $(docker ps -qa  --filter "label=ranesrapp")  2> /dev/null
+docker rm -f $(docker ps -qa  --filter "label=ranesrapp")  2> /dev/null
 
+docker compose -f docker-compose-esrapp_gen.yaml -p esrapp down
