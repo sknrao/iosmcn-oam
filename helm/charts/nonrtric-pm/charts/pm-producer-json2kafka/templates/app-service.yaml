@@ -15,15 +15,20 @@
 #  ============LICENSE_END=================================================
 #
 
-apiVersion: v2
-name: nrt-base-1
-description: Non-RT RIC foundation - layer 1
 
-type: application
-
-version: 0.1.0
-
-appVersion: 0.1.0
-
-dependencies:
-
+apiVersion: v1
+kind: Service
+metadata:
+  name: pm-producer-json2kafka
+  namespace: nonrtric
+  labels:
+    app: pm-producer-json2kafka
+spec:
+  clusterIP: None          # Headless service
+  selector:
+    app: pm-producer-json2kafka
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8084
+    targetPort: 8084

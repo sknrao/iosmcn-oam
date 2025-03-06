@@ -16,15 +16,10 @@
 #
 
 apiVersion: v1
-kind: Secret
-type: Opaque
+kind: ConfigMap
 metadata:
-  name: influxdb-api-token
+  name: pm-producer-json2kafka-cm-config
   namespace: nonrtric
-# token contains dummy string, will be replaced during installation
+
 data:
-  token: ZHVtbXk=
-
-
-
-
+{{ (.Files.Glob "config/application.yaml").AsConfig | nindent 2 }}

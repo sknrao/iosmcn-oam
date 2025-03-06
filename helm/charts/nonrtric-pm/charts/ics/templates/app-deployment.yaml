@@ -16,46 +16,37 @@
 #
 
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
-  labels:
-    app: influxdb2
-  name: influxdb2
+  name: informationservice
   namespace: nonrtric
+  labels:
+    app: informationservice
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: influxdb2
-  serviceName: influxdb2
+      app: informationservice
   template:
     metadata:
       labels:
-        app: influxdb2
+        app: informationservice
     spec:
       containers:
-      - image: influxdb:2.6.1
-        name: influxdb2
-        env:
-        - name: DOCKER_INFLUXDB_INIT_MODE
-          value: setup
-        - name: DOCKER_INFLUXDB_INIT_USERNAME
-          value: admin
-        - name: DOCKER_INFLUXDB_INIT_ORG
-          value: o-ran-sc
-        - name: DOCKER_INFLUXDB_INIT_BUCKET
-          value: pm-logg-bucket
-        - name: DOCKER_INFLUXDB_INIT_ADMIN_TOKEN
-          value: abcdesf
-        - name: DOCKER_INFLUXDB_INIT_PASSWORD
-          value: mySuP3rS3cr3tT0keN
+      - name: informationservice
+        image: nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-informationcoordinatorservice:1.5.0
+        imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 8086
-          name: influxdb2
-        readinessProbe:
-          httpGet:
-            path: /ping
-            port: 8086
-          initialDelaySeconds: 10
-          periodSeconds: 3
-
+        - name: http
+          containerPort: 8083
+        - name: https
+          containerPort: 8434
+        volumeMounts:
+        - mountPath: /opt/app/information-coordinator-service/config/application.yaml
+          subPath: application.yaml
+          name: informationservice-cm-config
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: informationservice-cm-config
+        name: informationservice-cm-config

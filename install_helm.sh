@@ -10,6 +10,50 @@ check_error() {
     fi
 }
 
+process_client() {
+  local cid="$1"
+  create_clients nonrtric-realm "$cid"
+  check_error $?
+ 
+  generate_client_secrets nonrtric-realm "$cid"
+  check_error $?
+
+  export APP_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
+
+  envsubst < helm/charts/nonrtric-pm/charts/"$cid"/values-template.yaml > helm/charts/nonrtric-pm/charts/"$cid"/values.yaml
+}
+
+# Create a topic
+# args:  <kafka-bootstrap-pod.namespace:<port> <topic-name> [<num-partitions>]
+create_topic() {
+
+    if [ $# -lt 2 ] && [ $# -gt 3 ]; then
+        echo "Usage: create-topic.sh <kafka-bootstrap-svc.namespace> <topic-name> [<num-partitions>]"
+        exit 1
+    fi
+    kafka=$1
+    topic=$2
+    partitions=$3
+
+    if [ -z "$partitions" ]; then
+        partitions=1
+    fi
+
+    echo "Creating topic: $topic with $partitions partition(s) in $kafka"
+
+    kubectl exec -it kafka-client -n nonrtric -- bash -c 'kafka-topics --create --topic '$topic'  --partitions '$partitions' --bootstrap-server '$kafka
+
+    return $?
+}
+
+
+# in case of Kind
+docker exec -it kind-worker rm -rf shared-volume
+docker exec -it kind-worker mkdir shared-volume
+docker exec -it kind-worker chmod 777 shared-volume
+#kind load docker-image sknrao/dfc:2.0
+#kind load docker-image nexus3.onap.org:10002/onap/org.onap.dcaegen2.collectors.ves.vescollector:1.12.3-configured
+#kind load docker-image pm-file-converter:latest
 
 export KUBERNETES_HOST="172.18.0.3"
 helm install -n nonrtric keycloak helm/charts/keycloak/
@@ -29,11 +73,16 @@ check_error $?
 generate_client_secrets nonrtric-realm $cid
 check_error $?
 
+cid="console-setup"
+__get_admin_token
+TOKEN=$(get_client_token nonrtric-realm $cid)
+echo "Client token is: $TOKEN"
+
 helm repo add strimzi https://strimzi.io/charts/
 
 helm install --wait strimzi-kafka-crds -n nonrtric strimzi/strimzi-kafka-operator --version 0.39.0
 
-cp config/bundle-server/bundle.tar.gz helm/charts/opa-rule-db/data
+cp config/bundle-server/bundle.tar.gz helm/charts/databases/opa-rule-db/data
 
 helm install -n nonrtric databases helm/charts/databases/
 
@@ -59,14 +108,34 @@ while [ $retcode -eq 1 ]; do
     fi
 done
 
-# Save influx user api-token to secret
-B64FLAG="-w 0"
-case "$OSTYPE" in
-  darwin*)  B64FLAG="" ;;
-esac
-INFLUXDB2_TOKEN=$(get_influxdb2_token influxdb2-0 nonrtric | base64 $B64FLAG)
-echo "INFLUX TOKEN IS $INFLUXDB2_TOKEN"
+INFLUXDB2_TOKEN="abcdesf"
 
 helm install -n nonrtric kafka helm/charts/kafka/
 
 helm install -n nonrtric onap-parts helm/charts/onap-parts/
+
+echo "Wait for kafka"
+_ts=$SECONDS
+until $(kubectl exec -n nonrtric kafka-client -- kafka-topics --list --bootstrap-server kafka-1-kafka-bootstrap.nonrtric:9092 1> /dev/null 2> /dev/null); do
+    echo -ne "  $(($SECONDS-$_ts)) sec, retrying at $(($SECONDS-$_ts+5)) sec                        $SAMELINE"
+    sleep 5
+done
+
+# Pre-create known topic to avoid losing data when autocreated by apps
+__topics_list="file-ready collected-file json-file-ready-kp json-file-ready-kpadp pmreports"
+for __topic in $__topics_list; do
+    create_topic kafka-1-kafka-bootstrap.nonrtric:9092 $__topic 10
+done
+
+# Need to update DFC truststore?
+# Need to use keytool for CA for RAN?
+
+process_client "dfc"
+process_client "kafka-producer-pm-xml2json"
+process_client "pm-producer-json2kafka"
+
+helm install -n nonrtric nonrtric-pm helm/charts/nonrtric-pm/
+
+#setup_pmlog
+
+#setup_controller_collector
