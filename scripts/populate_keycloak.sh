@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #  ============LICENSE_START===============================================
-#  Copyright (C) 2023 Nordix Foundation. All rights reserved.
+#  Copyright (C) 2023 Nordix Foundation and Tietoevry. All rights reserved.
 #  ========================================================================
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -19,7 +19,14 @@
 
 # Script intended to be sourced by other script to add functions to the keycloak rest API
 
-KC_URL=http://localhost:8462
+if [ -n "$KUBERNETES_HOST" ]; then
+    KC_PROXY_PORT=$(kubectl get svc -n nonrtric keycloak --output jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
+    KC_URL="$KUBERNETES_HOST:$KC_PROXY_PORT"
+else
+    KC_URL=http://localhost:8462
+fi
+
+
 echo "Keycloak url: "$KC_URL
 
 __get_admin_token() {

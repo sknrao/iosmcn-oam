@@ -1,0 +1,73 @@
+
+#  ============LICENSE_START===============================================
+#  Copyright (C) 2023 Open Networking Foundation. All rights reserved.
+#  Copyright (C) 2023 Tietoevry. All rights reserved.
+#  ========================================================================
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#  ============LICENSE_END=================================================
+#
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: message-router
+  namespace: nonrtric
+  labels:
+    app: message-router
+
+spec:
+  selector:
+    matchLabels:
+      app: message-router
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: message-router
+        app: message-router
+      name: message-router
+    spec:
+      containers:
+        - name: message-router
+          image: nexus3.onap.org:10002/onap/dmaap/dmaap-mr:1.4.4
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 3904
+            name: api
+
+          env:
+          # - name: JAASLOGIN
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: strimzi-kafka-admin
+          #       key: sasl.jaas.config
+          # - name: SASLMECH
+          #   value: scram-sha-512
+          - name: enableCadi
+            value: "false"
+          - name: useZkTopicStore
+            value: "false"
+          volumeMounts:
+            - mountPath: /appl/dmaapMR1/bundleconfig/etc/appprops/MsgRtrApi.properties
+              subPath: MsgRtrApi.properties
+              name: msgrtrapi
+            - mountPath: /appl/dmaapMR1/bundleconfig/etc/logback.xml
+              subPath: logback.xml
+              name: logback
+      volumes:
+        - name: msgrtrapi
+          configMap:
+            name: msgrtrapi
+        - name: logback
+          configMap:
+            name: logback
