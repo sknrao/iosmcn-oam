@@ -12,6 +12,7 @@ check_error() {
 
 process_client() {
   local cid="$1"
+  local path="$2"
   create_clients nonrtric-realm "$cid"
   check_error $?
  
@@ -20,7 +21,7 @@ process_client() {
 
   export APP_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
 
-  envsubst < helm/charts/nonrtric-pm/charts/"$cid"/values-template.yaml > helm/charts/nonrtric-pm/charts/"$cid"/values.yaml
+  envsubst < helm/charts/$path/values-template.yaml > helm/charts/$path/values.yaml
 }
 
 # Create a topic
@@ -54,6 +55,7 @@ docker exec -it kind-worker chmod 777 shared-volume
 #kind load docker-image sknrao/dfc:2.0
 #kind load docker-image nexus3.onap.org:10002/onap/org.onap.dcaegen2.collectors.ves.vescollector:1.12.3-configured
 #kind load docker-image pm-file-converter:latest
+# kind load docker-image pm-rapp:iosmcn
 
 export KUBERNETES_HOST="172.18.0.3"
 helm install -n nonrtric keycloak helm/charts/keycloak/
@@ -84,7 +86,7 @@ helm install --wait strimzi-kafka-crds -n nonrtric strimzi/strimzi-kafka-operato
 
 cp config/bundle-server/bundle.tar.gz helm/charts/databases/opa-rule-db/data
 
-helm install -n nonrtric databases helm/charts/databases/
+helm install --wait  -n nonrtric databases helm/charts/databases/
 
 echo "Waiting for influx db - there may be error messages while trying..."
 retcode=1
@@ -110,9 +112,9 @@ done
 
 INFLUXDB2_TOKEN="abcdesf"
 
-helm install -n nonrtric kafka helm/charts/kafka/
+helm install --wait  -n nonrtric kafka helm/charts/kafka/
 
-helm install -n nonrtric onap-parts helm/charts/onap-parts/
+helm install --wait  -n nonrtric onap-parts helm/charts/onap-parts/
 
 echo "Wait for kafka"
 _ts=$SECONDS
@@ -130,12 +132,16 @@ done
 # Need to update DFC truststore?
 # Need to use keytool for CA for RAN?
 
-process_client "dfc"
-process_client "kafka-producer-pm-xml2json"
-process_client "pm-producer-json2kafka"
+process_client "dfc" "nonrtric-pm/charts/dfc"
+process_client "kafka-producer-pm-xml2json" "nonrtric-pm/charts/kafka-producer-pm-xml2json"
+process_client "pm-producer-json2kafka" "nonrtric-pm/charts/pm-producer-json2kafka"
+process_client "pm-log" "pm-log"
 
-helm install -n nonrtric nonrtric-pm helm/charts/nonrtric-pm/
+helm install --wait  -n nonrtric nonrtric-pm helm/charts/nonrtric-pm/
 
-#setup_pmlog
+helm install --wait  -n nonrtric pm-log helm/charts/pm-log/
 
-#setup_controller_collector
+sleep 10
+
+process_client "pm-rapp" "nrt-rapps"
+helm install --wait  -n nonrtric pm-rapp helm/charts/nrt-rapps/
