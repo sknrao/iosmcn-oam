@@ -17,25 +17,25 @@
 #  ============LICENSE_END=================================================
 #
 
-#. scripts/kube_get_controlplane_host.sh
-
-# Generic error printout function
-# args: <numeric-response-code> <descriptive-string>
-check_error() {
-    if [ $1 -ne 0 ]; then
-        echo "Failed: $2"
-        echo "Exiting..."
-        exit 1
-    fi
-}
+ICS_ADDRESS=""
+if [ -n "$1" ]; then
+    # Assign the input parameter to a local variable
+    ICS_ADDRESS="$1"
+    echo "ICS address (IP:PORT) is: $ICS_ADDRESS"
+else
+    echo "ICS address (IP:PORT) does not exist."
+    exit 1
+fi
 
 . scripts/update_ics_job.sh
 
 echo "Installation of pm to influx job"
+export KUBERNETES_HOST="172.18.0.3"
 
 . scripts/populate_keycloak.sh
 
 cid="console-setup"
+
 TOKEN=$(get_client_token nonrtric-realm $cid)
 
 JOB='{
@@ -55,7 +55,7 @@ JOB='{
        }
     }'
 echo $JOB > .job.json
-update_ics_job pmlog $TOKEN
+update_ics_job $ICS_ADDRESS pmlog $TOKEN
 
 echo "done"
 
