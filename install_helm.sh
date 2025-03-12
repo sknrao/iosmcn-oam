@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. scripts/kube_get_controlplane_host.sh
+
 # Generic error printout function
 # args: <numeric-response-code> <descriptive-string>
 check_error() {
@@ -47,22 +49,56 @@ create_topic() {
     return $?
 }
 
+# Function to display usage
+usage() {
+   echo "Usage: $0 [--kind] [--kubernetes-host=<host>]"
+   exit 1
+}
 
-# in case of Kind
-docker exec -it kind-worker rm -rf shared-volume
-docker exec -it kind-worker mkdir shared-volume
-docker exec -it kind-worker chmod 777 shared-volume
-#kind load docker-image sknrao/dfc:2.0
-#kind load docker-image nexus3.onap.org:10002/onap/org.onap.dcaegen2.collectors.ves.vescollector:1.12.3-configured
-#kind load docker-image pm-file-converter:latest
-# kind load docker-image pm-rapp:iosmcn
+# Initialize variables
+KIND=false
+export KUBERNETES_HOST=$(kube_get_controlplane_host)
 
-export KUBERNETES_HOST="172.18.0.3"
-helm install -n nonrtric keycloak helm/charts/keycloak/
-# Create realm in keycloak
+# Parse parameters
+while [[ "$#" -gt 0 ]]; do
+   case $1 in
+       --help)
+           usage
+           shift
+           ;;
+       --kind)
+           KIND=true
+           echo "Kind deployment option was chosen."
+           shift
+           ;;
+       --kubernetes-host=*)
+           export KUBERNETES_HOST="${1#*=}"
+           echo "Kubernetes HOST is: $KUBERNETES_HOST"
+           shift
+           ;;
+       *)
+           usage
+           ;;
+   esac
+done
 
+if [ $KIND == "true" ]; then
+  # in case of Kind
+  docker exec -it kind-worker rm -rf shared-volume
+  docker exec -it kind-worker mkdir shared-volume
+  docker exec -it kind-worker chmod 777 shared-volume
+  #kind load docker-image sknrao/dfc:2.0
+  #kind load docker-image nexus3.onap.org:10002/onap/org.onap.dcaegen2.collectors.ves.vescollector:1.12.3-configured
+  #kind load docker-image pm-file-converter:latest
+  # kind load docker-image pm-rapp:iosmcn
+  # kind load docker-image pynts-o-du-o1:0.9.1
+fi
+
+
+helm install --wait -n nonrtric keycloak helm/charts/keycloak/
 . scripts/populate_keycloak.sh
 
+# Create realm in keycloak
 create_realms nonrtric-realm
 while [ $? -ne 0 ]; do
     create_realms nonrtric-realm
@@ -84,7 +120,7 @@ helm repo add strimzi https://strimzi.io/charts/
 
 helm install --wait strimzi-kafka-crds -n nonrtric strimzi/strimzi-kafka-operator --version 0.39.0
 
-cp config/bundle-server/bundle.tar.gz helm/charts/databases/opa-rule-db/data
+cp config/bundle-server/bundle.tar.gz helm/charts/databases/charts/opa-rule-db/data
 
 helm install --wait  -n nonrtric databases helm/charts/databases/
 

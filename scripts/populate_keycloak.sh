@@ -38,6 +38,7 @@ __get_admin_token() {
             echo "Could not get admin token, retrying..."
             echo "Retrieved token: $ADMIN_TOKEN"
         fi
+        sleep 2
     done
     echo "Admin token: ${ADMIN_TOKEN:0:10}..."
     echo $ADMIN_TOKEN > .admin_token

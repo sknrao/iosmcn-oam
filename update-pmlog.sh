@@ -17,14 +17,55 @@
 #  ============LICENSE_END=================================================
 #
 
-ICS_ADDRESS=""
-if [ -n "$1" ]; then
-    # Assign the input parameter to a local variable
-    ICS_ADDRESS="$1"
-    echo "ICS address (IP:PORT) is: $ICS_ADDRESS"
-else
-    echo "ICS address (IP:PORT) does not exist."
-    exit 1
+# Function to display usage
+usage() {
+   echo "Usage: $0 [--deployment-type=<docker/kind/kubernetes>] [--ics-port=<port>] [--kubernetes-host=<host>]"
+   exit 1
+}
+
+KUBERNETES_HOST_SPECIFIED=""
+# Parse parameters
+while [[ "$#" -gt 0 ]]; do
+   case $1 in
+      --help)
+          usage
+          shift
+          ;;
+      --ics-port)
+          ICS_PORT="${1#*=}"
+          echo "ICS port is $ICS_PORT."
+          shift
+          ;;
+      --deployment-type)
+          DEPLOYMENT_TYPE="${1#*=}"
+          echo "Deployment optiontype is $DEPLOYMENT_TYPE."
+          shift
+          ;;
+      --kubernetes-host=*)
+          KUBERNETES_HOST_SPECIFIED="${1#*=}"
+          echo "Kubernetes HOST specified: $KUBERNETES_HOST_SPECIFIED"
+          shift
+          ;;
+      *)
+          usage
+          ;;
+   esac
+done
+
+if [ $KUBERNETES_HOST == "kubernetes" ]; then
+    echo "Deployment type is type kubernetes, retriving kubernetes host IP automatically, ignoring --kubernetes-host"
+    export KUBERNETES_HOST=$(kube_get_controlplane_host)
+    ICS_ADDRESS="${KUBERNETES_HOST}:31823"
+else if [ $KUBERNETES_HOST == "kind" ]; then
+    if [ -z "$KUBERNETES_HOST_SPECIFIED" ]; then
+      # The variable is empty
+      echo "Input param --kubernetes-host is missing and is required."
+      exit 1
+    fi
+    export KUBERNETES_HOST=$KUBERNETES_HOST_SPECIFIED
+    ICS_ADDRESS="${KUBERNETES_HOST}:31823"
+else if [ $KUBERNETES_HOST == "docker" ]; then
+    ICS_ADDRESS=""
 fi
 
 . scripts/update_ics_job.sh
