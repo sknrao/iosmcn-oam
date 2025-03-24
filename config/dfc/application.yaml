@@ -46,6 +46,7 @@ logging:
     name: /var/log/ONAP/application.log
 app:
   #filepath: config/datafile_endpoints_test.json
+  file-ready-message-class: TS28532
   collected-files-path: "/tmp/onap_datafile/"
   # Numer of worker threads. Increased number may increase throughput, but will require more executing resources.
   number-of-worker-treads: 50

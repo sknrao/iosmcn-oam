@@ -44,6 +44,7 @@ services:
       CREDS_CLIENT_SECRET: $XML2JSON_CLIENT_SECRET
       CREDS_CLIENT_ID: kafka-producer-pm-xml2json
       AUTH_SERVICE_URL: http://keycloak:8080/realms/nonrtric-realm/protocol/openid-connect/token
+      DATA_TYPE_FORMAT: TS28532
     networks:
       smo:
 
