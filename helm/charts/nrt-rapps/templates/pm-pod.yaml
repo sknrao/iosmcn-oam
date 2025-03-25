@@ -64,7 +64,7 @@ spec:
     - name: CREDS_CLIENT_ID
       value: pm-rapp
     - name: AUTH_SERVICE_URL
-      value: http://keycloak.nonrtric:8080/realms/nonrtric-realm/protocol/openid-connect/token
+      value: http://keycloak.nonrtric/realms/nonrtric-realm/protocol/openid-connect/token
     volumeMounts:
     - mountPath: /config
       name: pm-rapp-jobdef

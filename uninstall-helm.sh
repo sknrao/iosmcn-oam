@@ -7,3 +7,4 @@ helm uninstall onap-parts
 helm uninstall kafka
 helm uninstall databases
 helm uninstall keycloak
+kubectl delete pvc data-keycloak-postgresql-0

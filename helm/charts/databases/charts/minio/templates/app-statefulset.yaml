@@ -66,7 +66,7 @@ spec:
         - name: MINIO_POLICY_PLUGIN_URL
           value: http://opa-minio.nonrtric:8181/v1/data/minio/authz/allow
         - name: MINIO_IDENTITY_OPENID_CONFIG_URL
-          value: http://keycloak.nonrtric:8080/realms/nonrtric-realm/.well-known/openid-configuration
+          value: http://keycloak.nonrtric/realms/nonrtric-realm/.well-known/openid-configuration
         volumeMounts:
         - mountPath: /data
           name: data-vol

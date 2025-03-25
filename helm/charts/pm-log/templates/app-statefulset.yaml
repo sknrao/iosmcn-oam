@@ -55,7 +55,7 @@ spec:
         - name: CREDS_CLIENT_ID
           value: pm-log
         - name: AUTH_SERVICE_URL
-          value: http://keycloak.nonrtric:8080/realms/nonrtric-realm/protocol/openid-connect/token
+          value: http://keycloak.nonrtric/realms/nonrtric-realm/protocol/openid-connect/token
         - name: OUTPUT_FILE
           value: /token-cache/jwt.txt
         volumeMounts:

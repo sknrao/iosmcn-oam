@@ -22,10 +22,14 @@
 if [ -n "$KUBERNETES_HOST" ]; then
     KC_PROXY_PORT=$(kubectl get svc -n nonrtric keycloak --output jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
     KC_URL="$KUBERNETES_HOST:$KC_PROXY_PORT"
+    PASSWORD=$(kubectl get secret -n nonrtric keycloak -o jsonpath='{.data.admin-password}' | base64 --decode)
+    echo "Keycloak user password retrieved from secret is: $PASSWORD"
+    USER="user"
 else
     KC_URL=http://localhost:8462
+    PASSWORD="admin"
+    USER="admin"
 fi
-
 
 echo "Keycloak url: "$KC_URL
 
@@ -33,7 +37,7 @@ __get_admin_token() {
     echo "Get admin token"
     ADMIN_TOKEN=""
     while [ "${#ADMIN_TOKEN}" -lt 20 ]; do
-        ADMIN_TOKEN=$(curl -s -X POST --max-time 2     "$KC_URL/realms/master/protocol/openid-connect/token"     -H "Content-Type: application/x-www-form-urlencoded"     -d "username=admin" -d "password=admin" -d 'grant_type=password' -d "client_id=admin-cli"  |  jq -r '.access_token')
+        ADMIN_TOKEN=$(curl -s -X POST --max-time 2     "$KC_URL/realms/master/protocol/openid-connect/token"     -H "Content-Type: application/x-www-form-urlencoded"     -d "username=$USER" -d "password=$PASSWORD" -d 'grant_type=password' -d "client_id=admin-cli"  |  jq -r '.access_token')
         if [ "${#ADMIN_TOKEN}" -lt 20 ]; then
             echo "Could not get admin token, retrying..."
             echo "Retrieved token: $ADMIN_TOKEN"

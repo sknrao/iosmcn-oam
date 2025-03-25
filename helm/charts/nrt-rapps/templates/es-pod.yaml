@@ -54,7 +54,7 @@ spec:
     - name: CREDS_CLIENT_ID
       value: es-rapp
     - name: AUTH_SERVICE_URL
-      value: http://keycloak.nonrtric:8080/realms/nonrtric-realm/protocol/openid-connect/token
+      value: http://keycloak.nonrtric/realms/nonrtric-realm/protocol/openid-connect/token
     - name: TOPIC
       value: es-rapp-topic
     - name: KAFKA_SERVER

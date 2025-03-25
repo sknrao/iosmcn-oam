@@ -43,8 +43,8 @@ spec:
           type: oauth
           enablePlain: true
           maxSecondsWithoutReauthentication: 300
-          validIssuerUri: http://keycloak.nonrtric:8080/realms/nonrtric-realm
-          jwksEndpointUri: http://keycloak.nonrtric:8080/realms/nonrtric-realm/protocol/openid-connect/certs
+          validIssuerUri: http://keycloak.nonrtric/realms/nonrtric-realm
+          jwksEndpointUri: http://keycloak.nonrtric/realms/nonrtric-realm/protocol/openid-connect/certs
           userNameClaim: preferred_username
     authorization:
       type: opa

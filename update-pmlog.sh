@@ -52,11 +52,11 @@ while [[ "$#" -gt 0 ]]; do
    esac
 done
 
-if [ $KUBERNETES_HOST == "kubernetes" ]; then
+if [ $DEPLOYMENT_TYPE == "kubernetes" ]; then
     echo "Deployment type is type kubernetes, retriving kubernetes host IP automatically, ignoring --kubernetes-host"
     export KUBERNETES_HOST=$(kube_get_controlplane_host)
     ICS_ADDRESS="${KUBERNETES_HOST}:31823"
-else if [ $KUBERNETES_HOST == "kind" ]; then
+else if [ $DEPLOYMENT_TYPE == "kind" ]; then
     if [ -z "$KUBERNETES_HOST_SPECIFIED" ]; then
       # The variable is empty
       echo "Input param --kubernetes-host is missing and is required."
@@ -64,7 +64,7 @@ else if [ $KUBERNETES_HOST == "kind" ]; then
     fi
     export KUBERNETES_HOST=$KUBERNETES_HOST_SPECIFIED
     ICS_ADDRESS="${KUBERNETES_HOST}:31823"
-else if [ $KUBERNETES_HOST == "docker" ]; then
+else if [ $DEPLOYMENT_TYPE == "docker" ]; then
     ICS_ADDRESS=""
 fi
 

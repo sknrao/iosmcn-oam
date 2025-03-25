@@ -92,10 +92,11 @@ if [ $KIND == "true" ]; then
   #kind load docker-image pm-file-converter:latest
   # kind load docker-image pm-rapp:iosmcn
   # kind load docker-image pynts-o-du-o1:0.9.1
+else
+  scripts/clean-shared-volume.sh
 fi
 
-
-helm install --wait -n nonrtric keycloak helm/charts/keycloak/
+helm install --wait keycloak oci://registry-1.docker.io/bitnamicharts/keycloak -f helm/keyloak_values.yaml
 . scripts/populate_keycloak.sh
 
 # Create realm in keycloak
