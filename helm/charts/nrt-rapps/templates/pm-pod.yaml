@@ -25,7 +25,7 @@ metadata:
 spec:
   containers:
   - name: pm-rapp
-    image: pm-rapp:iosmcn
+    image: localhost:5000/pm-rapp:iosmcn
     imagePullPolicy: IfNotPresent
     ports:
     - name: http

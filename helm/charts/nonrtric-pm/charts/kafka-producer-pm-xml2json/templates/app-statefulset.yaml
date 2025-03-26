@@ -34,11 +34,10 @@ spec:
     metadata:
       labels:
         app: kafka-producer-pm-xml2json
-
     spec:
       containers:
       - name: kafka-producer-pm-xml2json
-        image: pm-file-converter:latest
+        image: nexus3.o-ran-sc.org:10004/o-ran-sc/nonrtric-plt-ranpm-pm-file-converter:1.2.0
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -85,5 +84,5 @@ spec:
         name: kafka-producer-pm-xml2json-cm-config
       - name: shared-volume
         hostPath:
-          path: /shared-volume
+          path: /tmp/shared-volume
           type: Directory

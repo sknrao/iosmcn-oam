@@ -24,7 +24,7 @@ spec:
             name: ves-collector-ves-dmaap-config.json
       containers:
       - name: ves-collector
-        image: nexus3.onap.org:10002/onap/org.onap.dcaegen2.collectors.ves.vescollector:1.12.3-configured
+        image: localhost:5000/vescollector:1.12.3-configured
         imagePullPolicy: IfNotPresent
         env:
         - name: DMAAPHOST

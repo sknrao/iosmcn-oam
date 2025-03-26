@@ -55,6 +55,22 @@ usage() {
    exit 1
 }
 
+manage_directories() {
+   local directories=("$@")  # Accepts multiple directory names as arguments
+
+   for dir in "${directories[@]}"; do
+       # Check if the directory exists
+       if [ -d "$dir" ]; then
+           # Remove the directory if it exists
+           rm -rf "$dir"
+       fi
+       # Create the directory
+       mkdir "$dir"
+       # Set permissions
+       chmod 777 "$dir"
+   done
+}
+
 # Initialize variables
 KIND=false
 export KUBERNETES_HOST=$(kube_get_controlplane_host)
@@ -82,21 +98,35 @@ while [[ "$#" -gt 0 ]]; do
    esac
 done
 
+# set kubectl context to correct namespace
+kubectl config set-context --current --namespace=nonrtric
 if [ $KIND == "true" ]; then
   # in case of Kind
   docker exec -it kind-worker rm -rf shared-volume
   docker exec -it kind-worker mkdir shared-volume
   docker exec -it kind-worker chmod 777 shared-volume
   #kind load docker-image sknrao/dfc:2.0
-  #kind load docker-image nexus3.onap.org:10002/onap/org.onap.dcaegen2.collectors.ves.vescollector:1.12.3-configured
+  #kind load docker-image localhost:5000/vescollector:1.12.3-configured
   #kind load docker-image pm-file-converter:latest
   # kind load docker-image pm-rapp:iosmcn
   # kind load docker-image pynts-o-du-o1:0.9.1
 else
-  scripts/clean-shared-volume.sh
+  docker image push localhost:5000/vescollector:1.12.3-configured || { echo "Docker image push failed. Exiting script."; exit 1; }
+  docker image push helm/charts/nrt-rapps/templates/pm-pod.yaml || { echo "Docker image push failed. Exiting script."; exit 1; }
+  # since Postgres always creates DB with different password stored in it, we need to delete PV each time
+  kubectl delete pvc data-keycloak-postgresql-0
+  kubectl delete pv local-pv
+  # delete and recreate directories: shared-volume (used for Volume Mount) and data (used for PV)
+  manage_directories "/tmp/shared-volume" "/tmp/data"
+  # delete and clone sim-o1 repo to path
+  sudo rm -rf /tmp/sim-o1-ofhmp-interfaces/
+  git clone https://github.com/o-ran-sc/sim-o1-ofhmp-interfaces.git /tmp/sim-o1-ofhmp-interfaces/
+  
+  kubectl apply -f helm/storageclass.yaml
+  kubectl apply -f helm/pv.yaml
 fi
 
-helm install --wait keycloak oci://registry-1.docker.io/bitnamicharts/keycloak -f helm/keyloak_values.yaml
+helm install --wait keycloak oci://registry-1.docker.io/bitnamicharts/keycloak -f helm/keyloak_values.yaml --version 24.4.13
 . scripts/populate_keycloak.sh
 
 # Create realm in keycloak

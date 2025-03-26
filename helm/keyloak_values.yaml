@@ -23,3 +23,5 @@ image:
 logging:
   output: default
   level: INFO
+global:
+  storageClass: "local-storage"
