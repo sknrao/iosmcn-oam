@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: pynts
-        image: pynts-o-du-o1:0.9.1
+        image: localhost:5000/pynts-o-du-o1:0.9.1
         imagePullPolicy: IfNotPresent
         env:
         - name: ENDPOINT_COUNT

@@ -62,7 +62,7 @@ manage_directories() {
        # Check if the directory exists
        if [ -d "$dir" ]; then
            # Remove the directory if it exists
-           rm -rf "$dir"
+           sudo rm -rf "$dir"
        fi
        # Create the directory
        mkdir "$dir"
@@ -105,14 +105,14 @@ if [ $KIND == "true" ]; then
   docker exec -it kind-worker rm -rf shared-volume
   docker exec -it kind-worker mkdir shared-volume
   docker exec -it kind-worker chmod 777 shared-volume
-  #kind load docker-image sknrao/dfc:2.0
-  #kind load docker-image localhost:5000/vescollector:1.12.3-configured
-  #kind load docker-image pm-file-converter:latest
-  # kind load docker-image pm-rapp:iosmcn
-  # kind load docker-image pynts-o-du-o1:0.9.1
+  kind load docker-image localhost:5000/vescollector:1.12.3-configured
+  kind load docker-image pm-file-converter:latest
+  kind load docker-image pm-rapp:iosmcn
 else
-  docker image push localhost:5000/vescollector:1.12.3-configured || { echo "Docker image push failed. Exiting script."; exit 1; }
-  docker image push helm/charts/nrt-rapps/templates/pm-pod.yaml || { echo "Docker image push failed. Exiting script."; exit 1; }
+  # in case of pure Kubernetes
+  docker image push localhost:5000/pm-file-converter:new || { echo "Docker image pm-file-converter push failed. Exiting script."; exit 1; }
+  docker image push localhost:5000/vescollector:1.12.3-configured || { echo "Docker image vescollector push failed. Exiting script."; exit 1; }
+  docker image push localhost:5000/pm-rapp:iosmcn || { echo "Docker image pm-rapp push failed. Exiting script."; exit 1; }
   # since Postgres always creates DB with different password stored in it, we need to delete PV each time
   kubectl delete pvc data-keycloak-postgresql-0
   kubectl delete pv local-pv
@@ -122,8 +122,8 @@ else
   sudo rm -rf /tmp/sim-o1-ofhmp-interfaces/
   git clone https://github.com/o-ran-sc/sim-o1-ofhmp-interfaces.git /tmp/sim-o1-ofhmp-interfaces/
   
-  kubectl apply -f helm/storageclass.yaml
-  kubectl apply -f helm/pv.yaml
+  kubectl apply -f helm/kubernetes_storage_class.yaml
+  kubectl apply -f helm/kubernetes_storage_pv.yaml
 fi
 
 helm install --wait keycloak oci://registry-1.docker.io/bitnamicharts/keycloak -f helm/keyloak_values.yaml --version 24.4.13
