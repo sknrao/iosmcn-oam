@@ -33,18 +33,19 @@ server:
       key-alias: policy_agent
 logging:
   level:
-    ROOT: WARN
-    org.onap: WARN
-    org.springframework: WARN
-    org.springframework.data: WARN
-    org.springframework.web.reactive.function.client.ExchangeFunctions: WARN
-    #org.oran.datafile: WARN
-    #org.oran.datafile: TRACE
+    ROOT: INFO
+    org.onap: INFO
+    org.springframework: INFO
+    org.springframework.data: INFO
+    org.springframework.web.reactive.function.client.ExchangeFunctions: INFO
+    org.oran.datafile: INFO
+    #org.oran.datafile: INFO
     org.onap.dcaegen2.collectors.datafile: TRACE
 
   file:
     name: /var/log/ONAP/application.log
 app:
+  file-ready-message-class: TS28532
   collected-files-path: "/tmp/onap_datafile/"
   # Numer of worker threads. Increased number may increase throughput, but will require more executing resources.
   number-of-worker-treads: 50

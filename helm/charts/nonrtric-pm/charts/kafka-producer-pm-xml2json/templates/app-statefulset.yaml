@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
       - name: kafka-producer-pm-xml2json
-        image: localhost:5000/pm-file-converter:new #nexus3.o-ran-sc.org:10004/o-ran-sc/nonrtric-plt-ranpm-pm-file-converter:1.2.0
+        image: nexus3.o-ran-sc.org:10004/o-ran-sc/nonrtric-plt-ranpm-pm-file-converter:1.2.0
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -71,6 +71,8 @@ spec:
           value: kafka-producer-pm-xml2json
         - name: AUTH_SERVICE_URL
           value: http://keycloak.nonrtric/realms/nonrtric-realm/protocol/openid-connect/token
+        - name: DATA_TYPE_FORMAT
+          value: "TS28532"
         volumeMounts:
         - mountPath: /application_configuration.json
           subPath: application_configuration.json
