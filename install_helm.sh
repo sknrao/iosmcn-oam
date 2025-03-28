@@ -21,7 +21,13 @@ process_client() {
   generate_client_secrets nonrtric-realm "$cid"
   check_error $?
 
-  export APP_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
+  if [ "$cid" == "pm-rapp" ]; then
+    export PMRAPP_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
+  elif [ "$cid" == "es-rapp" ]; then
+    export ESRAPP_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
+  else
+    export APP_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
+  fi
 
   envsubst < helm/charts/$path/values-template.yaml > helm/charts/$path/values.yaml
 }
@@ -49,9 +55,16 @@ create_topic() {
     return $?
 }
 
-# Function to display usage
+# Function to display usage information
 usage() {
-   echo "Usage: $0 [--kind] [--kubernetes-host=<host>]"
+   echo "Usage: $0 --kubernetes-host <host> [--kind <kind>]"
+   echo
+   echo "Options:"
+   echo "  --kubernetes-host <host>  Required. Specify the Kubernetes host IP (for me, localhost did not work. In case of Kind, it is IP of kind-worker container)."
+   echo "  --kind                    Optional. If used, script assumes Kind kubernetes is used. If not used, assumes normal kubernetes is used."
+   echo
+   echo "Example:"
+   echo "  $0 --kubernetes-host 192.168.1.120 --kind"
    exit 1
 }
 
@@ -73,7 +86,7 @@ manage_directories() {
 
 # Initialize variables
 KIND=false
-export KUBERNETES_HOST=$(kube_get_controlplane_host)
+kubernetes_host_specified=false
 
 # Parse parameters
 while [[ "$#" -gt 0 ]]; do
@@ -90,6 +103,7 @@ while [[ "$#" -gt 0 ]]; do
        --kubernetes-host=*)
            export KUBERNETES_HOST="${1#*=}"
            echo "Kubernetes HOST is: $KUBERNETES_HOST"
+	   kubernetes_host_specified=true
            shift
            ;;
        *)
@@ -97,6 +111,12 @@ while [[ "$#" -gt 0 ]]; do
            ;;
    esac
 done
+
+# Check if the argument was not passed
+if [ "$kubernetes_host_specified" = false ]; then
+   echo "Error: --kubernetes-host argument is required."
+   exit 1
+fi
 
 # set kubectl context to correct namespace
 kubectl config set-context --current --namespace=nonrtric
@@ -110,9 +130,9 @@ if [ $KIND == "true" ]; then
   kind load docker-image pm-rapp:iosmcn
 else
   # in case of pure Kubernetes
-  docker image push localhost:5000/pm-file-converter:new || { echo "Docker image pm-file-converter push failed. Exiting script."; exit 1; }
   docker image push localhost:5000/vescollector:1.12.3-configured || { echo "Docker image vescollector push failed. Exiting script."; exit 1; }
   docker image push localhost:5000/pm-rapp:iosmcn || { echo "Docker image pm-rapp push failed. Exiting script."; exit 1; }
+  docker image push localhost:5000/es-rapp:latest || { echo "Docker image es-rapp push failed. Exiting script."; exit 1; }
   # since Postgres always creates DB with different password stored in it, we need to delete PV each time
   kubectl delete pvc data-keycloak-postgresql-0
   kubectl delete pv local-pv
@@ -191,7 +211,7 @@ until $(kubectl exec -n nonrtric kafka-client -- kafka-topics --list --bootstrap
 done
 
 # Pre-create known topic to avoid losing data when autocreated by apps
-__topics_list="file-ready collected-file json-file-ready-kp json-file-ready-kpadp pmreports"
+__topics_list="file-ready collected-file json-file-ready-kp json-file-ready-kpadp pmreports es-rapp-topic"
 for __topic in $__topics_list; do
     create_topic kafka-1-kafka-bootstrap.nonrtric:9092 $__topic 10
 done
@@ -211,4 +231,5 @@ helm install --wait  -n nonrtric pm-log helm/charts/pm-log/
 sleep 10
 
 process_client "pm-rapp" "nrt-rapps"
+process_client "es-rapp" "nrt-rapps"
 helm install --wait  -n nonrtric pm-rapp helm/charts/nrt-rapps/

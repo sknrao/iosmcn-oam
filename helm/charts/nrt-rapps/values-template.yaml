@@ -16,6 +16,6 @@
 #
 
 pmrapp:
-  clientsecret: $APP_CLIENT_SECRET
+  clientsecret: $PMRAPP_CLIENT_SECRET
 esrapp:
-  clientsecret: $APP_CLIENT_SECRET
+  clientsecret: $ESRAPP_CLIENT_SECRET
