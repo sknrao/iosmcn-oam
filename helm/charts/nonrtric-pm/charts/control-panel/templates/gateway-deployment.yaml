@@ -41,7 +41,7 @@ spec:
           containerPort: 9090
         volumeMounts:
         - mountPath: /opt/app/nonrtric-gateway/config/application.yaml
-          subPath: application.yaml
+          subPath: gateway-application.yaml
           name: gateway-cm-config
       volumes:
       - configMap:

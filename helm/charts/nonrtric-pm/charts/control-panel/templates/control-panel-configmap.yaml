@@ -22,4 +22,4 @@ metadata:
   namespace: nonrtric
 
 data:
-{{ (.Files.Glob "config/control-panel-application.yaml").AsConfig | nindent 2 }}
+{{ (.Files.Glob "config/control-panel-application.conf").AsConfig | nindent 2 }}

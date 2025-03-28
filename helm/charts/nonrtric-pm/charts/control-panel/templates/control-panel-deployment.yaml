@@ -41,7 +41,7 @@ spec:
           containerPort: 8080
         volumeMounts:
         - mountPath: /etc/nginx/nginx.conf
-          subPath: nginx.conf
+          subPath: control-panel-application.conf
           name: control-panel-cm-config
       volumes:
       - configMap:
