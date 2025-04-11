@@ -16,10 +16,10 @@
 #  limitations under the License.
 #  ============LICENSE_END=================================================
 #
-
+. scripts/kube_get_controlplane_host.sh
 # Function to display usage
 usage() {
-   echo "Usage: $0 [--deployment-type=<docker/kind/kubernetes>] [--ics-port=<port>] [--kubernetes-host=<host>]"
+   echo "Usage: $0 [--deployment-type=<docker/kubernetes>] [--ics-port=<port>] [--kubernetes-host=<host>]"
    exit 1
 }
 
@@ -31,12 +31,12 @@ while [[ "$#" -gt 0 ]]; do
           usage
           shift
           ;;
-      --ics-port)
+      --ics-port=*)
           ICS_PORT="${1#*=}"
           echo "ICS port is $ICS_PORT."
           shift
           ;;
-      --deployment-type)
+      --deployment-type=*)
           DEPLOYMENT_TYPE="${1#*=}"
           echo "Deployment optiontype is $DEPLOYMENT_TYPE."
           shift
@@ -53,25 +53,20 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [ $DEPLOYMENT_TYPE == "kubernetes" ]; then
-    echo "Deployment type is type kubernetes, retriving kubernetes host IP automatically, ignoring --kubernetes-host"
-    export KUBERNETES_HOST=$(kube_get_controlplane_host)
-    ICS_ADDRESS="${KUBERNETES_HOST}:31823"
-else if [ $DEPLOYMENT_TYPE == "kind" ]; then
     if [ -z "$KUBERNETES_HOST_SPECIFIED" ]; then
       # The variable is empty
       echo "Input param --kubernetes-host is missing and is required."
       exit 1
     fi
     export KUBERNETES_HOST=$KUBERNETES_HOST_SPECIFIED
-    ICS_ADDRESS="${KUBERNETES_HOST}:31823"
-else if [ $DEPLOYMENT_TYPE == "docker" ]; then
-    ICS_ADDRESS=""
+    ICS_ADDRESS="$KUBERNETES_HOST:$ICS_PORT"
+elif [ $DEPLOYMENT_TYPE == "docker" ]; then
+    ICS_ADDRESS="127.0.0.1:$ICS_PORT"
 fi
 
 . scripts/update_ics_job.sh
 
 echo "Installation of pm to influx job"
-export KUBERNETES_HOST="172.18.0.3"
 
 . scripts/populate_keycloak.sh
 
@@ -99,4 +94,3 @@ echo $JOB > .job.json
 update_ics_job $ICS_ADDRESS pmlog $TOKEN
 
 echo "done"
-
