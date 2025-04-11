@@ -25,6 +25,8 @@ process_client() {
     export PMRAPP_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
   elif [ "$cid" == "es-rapp" ]; then
     export ESRAPP_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
+  elif [ "$cid" == "ts-rapp" ]; then
+    export TSRAPP_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
   else
     export APP_CLIENT_SECRET=$(< .sec_nonrtric-realm_$cid)
   fi
@@ -211,7 +213,7 @@ until $(kubectl exec -n nonrtric kafka-client -- kafka-topics --list --bootstrap
 done
 
 # Pre-create known topic to avoid losing data when autocreated by apps
-__topics_list="file-ready collected-file json-file-ready-kp json-file-ready-kpadp pmreports es-rapp-topic"
+__topics_list="file-ready collected-file json-file-ready-kp json-file-ready-kpadp pmreports forward-rapp-topic"
 for __topic in $__topics_list; do
     create_topic kafka-1-kafka-bootstrap.nonrtric:9092 $__topic 10
 done
@@ -232,4 +234,5 @@ sleep 10
 
 process_client "pm-rapp" "nrt-rapps"
 process_client "es-rapp" "nrt-rapps"
+process_client "ts-rapp" "nrt-rapps"
 helm install --wait  -n nonrtric pm-rapp helm/charts/nrt-rapps/

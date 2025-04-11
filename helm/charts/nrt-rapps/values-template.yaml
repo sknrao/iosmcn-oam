@@ -19,3 +19,5 @@ pmrapp:
   clientsecret: $PMRAPP_CLIENT_SECRET
 esrapp:
   clientsecret: $ESRAPP_CLIENT_SECRET
+tsrapp:
+  clientsecret: $TSRAPP_CLIENT_SECRET

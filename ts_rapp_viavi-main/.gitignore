@@ -1,0 +1,10 @@
+__pycache__/
+*.log
+.idea/
+venv/
+.vscode/
+.coverage
+main.py
+rapp/
+test/
+README.md

@@ -18,27 +18,20 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: pm-rapp
+  name: ts-rapp
   namespace: nonrtric
   labels:
-    app: pm-rapp
+    app: ts-rapp
 spec:
   containers:
-  - name: pm-rapp
-    image: localhost:5000/pm-rapp:ts_rapp
+  - name: ts-rapp
+    image: localhost:5000/ts-rapp:v7
+    command: ["sleep", "infinity"]
     imagePullPolicy: IfNotPresent
     ports:
     - name: http
       containerPort: 80
     env:
-    - name: APPID
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.name
-    - name: APPNS
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.namespace
     - name: KAFKA_SERVER
       value: kafka-1-kafka-bootstrap.nonrtric
     - name: CONSUMER_PORT
@@ -47,28 +40,16 @@ spec:
       value: "9092"
     - name: ICS
       value: informationservice.nonrtric:8083
-    - name: TOPIC
-      value: pmreports
-    - name: FORWARD_TOPIC
+    - name: INPUT_TOPIC
       value: forward-rapp-topic
-    # Set value to any string to log payload
-    - name: LOG_PAYLOAD
-      value: '1'
-    # Set value to any string to indicate that payload is gzipped
-    - name: GZIP
-      value: ''
+    - name: O1_TOPIC
+      value: o1-topic
     - name: CREDS_GRANT_TYPE
       value: client_credentials
     - name: CREDS_CLIENT_SECRET
-      value: {{ .Values.pmrapp.clientsecret }}
+      value: {{ .Values.tsrapp.clientsecret }}
     - name: CREDS_CLIENT_ID
-      value: pm-rapp
+      value: ts-rapp
     - name: AUTH_SERVICE_URL
       value: http://keycloak.nonrtric/realms/nonrtric-realm/protocol/openid-connect/token
-    volumeMounts:
-    - mountPath: /config
-      name: pm-rapp-jobdef
-  volumes:
-  - configMap:
-      name: pm-rapp-jobdef
-    name: pm-rapp-jobdef
+

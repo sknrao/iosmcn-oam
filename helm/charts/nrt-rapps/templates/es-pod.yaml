@@ -55,7 +55,7 @@ spec:
     - name: AUTH_SERVICE_URL
       value: http://keycloak.nonrtric/realms/nonrtric-realm/protocol/openid-connect/token
     - name: TOPIC
-      value: es-rapp-topic
+      value: forward-rapp-topic
     - name: KAFKA_SERVER
       value: kafka-1-kafka-bootstrap.nonrtric:9097
     - name: FUNC

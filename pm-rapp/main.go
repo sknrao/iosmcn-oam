@@ -69,7 +69,7 @@ var producer_port = os.Getenv("PRODUCER_PORT")
 var consumer_port = os.Getenv("CONSUMER_PORT")
 
 var topic = os.Getenv("TOPIC")
-var es_topic = os.Getenv("ES_TOPIC")
+var forward_topic = os.Getenv("FORWARD_TOPIC")
 
 var ics_server = os.Getenv("ICS")
 
@@ -150,8 +150,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if es_topic == "" {
-		log.Error("Env ES_TOPIC not set")
+	if forward_topic == "" {
+		log.Error("Env FORWARD_TOPIC not set")
 		os.Exit(1)
 	}
 
@@ -835,14 +835,14 @@ func read_kafka_messages() {
 					fmt.Println("Received data: " + buf.String())
 					msg_count++
 					fmt.Println("Number of received json msgs: " + strconv.Itoa(msg_count))
-					log.Info("Sending data to ES-RAPP using topic: " + es_topic)
+					log.Info("Sending data to other R-apps using topic: " + forward_topic)
 					err = p.Produce(&kafka.Message{
-							TopicPartition: kafka.TopicPartition{Topic: &es_topic, Partition: kafka.PartitionAny},
+							TopicPartition: kafka.TopicPartition{Topic: &forward_topic, Partition: kafka.PartitionAny},
 							Value: buf.Bytes(), Key: nil}, nil)
 					if err != nil {
-						log.Error("Failed to send message to ES-RAPP.")
+						log.Error("Failed to send message to other R-apps.")
 					}
-					log.Info("Message was sent out to ES-RAPP.")
+					log.Info("Message was sent out to other R-apps.")
 				}
 			}
 			c.Commit()
