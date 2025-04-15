@@ -59,14 +59,14 @@ create_topic() {
 
 # Function to display usage information
 usage() {
-   echo "Usage: $0 --kubernetes-host <host> [--kind <kind>]"
+   echo "Usage: $0 --kubernetes-host=<host> [--kind <kind>]"
    echo
    echo "Options:"
    echo "  --kubernetes-host <host>  Required. Specify the Kubernetes host IP (for me, localhost did not work. In case of Kind, it is IP of kind-worker container)."
    echo "  --kind                    Optional. If used, script assumes Kind kubernetes is used. If not used, assumes normal kubernetes is used."
    echo
    echo "Example:"
-   echo "  $0 --kubernetes-host 192.168.1.120 --kind"
+   echo "  $0 --kubernetes-host=192.168.1.120 --kind"
    exit 1
 }
 
@@ -128,13 +128,15 @@ if [ $KIND == "true" ]; then
   docker exec -it kind-worker mkdir shared-volume
   docker exec -it kind-worker chmod 777 shared-volume
   kind load docker-image localhost:5000/vescollector:1.12.3-configured
-  kind load docker-image pm-file-converter:latest
-  kind load docker-image pm-rapp:iosmcn
+  kind load docker-image localhost:5000/pm-rapp:latest
+  kind load docker-image localhost:5000/es-rapp:latest
+  kind load docker-image localhost:5000/ts-rapp:latest
 else
   # in case of pure Kubernetes
   docker image push localhost:5000/vescollector:1.12.3-configured || { echo "Docker image vescollector push failed. Exiting script."; exit 1; }
-  docker image push localhost:5000/pm-rapp:iosmcn || { echo "Docker image pm-rapp push failed. Exiting script."; exit 1; }
+  docker image push localhost:5000/pm-rapp:latest || { echo "Docker image pm-rapp push failed. Exiting script."; exit 1; }
   docker image push localhost:5000/es-rapp:latest || { echo "Docker image es-rapp push failed. Exiting script."; exit 1; }
+  docker image push localhost:5000/ts-rapp:latest || { echo "Docker image ts-rapp push failed. Exiting script."; exit 1; }
   # since Postgres always creates DB with different password stored in it, we need to delete PV each time
   kubectl delete pvc data-keycloak-postgresql-0
   kubectl delete pv local-pv
