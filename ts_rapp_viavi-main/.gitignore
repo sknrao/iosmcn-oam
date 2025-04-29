@@ -4,7 +4,6 @@ __pycache__/
 venv/
 .vscode/
 .coverage
-main.py
 rapp/
 test/
 README.md
