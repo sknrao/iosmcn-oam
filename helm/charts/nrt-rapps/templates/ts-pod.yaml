@@ -32,6 +32,14 @@ spec:
     - name: http
       containerPort: 80
     env:
+    - name: VIAVI_ADDRESS
+      value: "172.21.0.1"
+    - name: VIAVI_PORT
+      value: "8888"
+    - name: VIAVI_USER
+      value: "root"
+    - name: VIAVI_PASS
+      value: "viavi"
     - name: KAFKA_SERVER
       value: kafka-1-kafka-bootstrap.nonrtric
     - name: CONSUMER_PORT

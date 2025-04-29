@@ -122,33 +122,35 @@ fi
 
 # set kubectl context to correct namespace
 kubectl config set-context --current --namespace=nonrtric
+# since Postgres always creates DB with different password stored in it, we need to delete PV each time
+kubectl delete pvc data-keycloak-postgresql-0
+kubectl delete pv local-pv
 if [ $KIND == "true" ]; then
   # in case of Kind
-  docker exec -it kind-worker rm -rf shared-volume
-  docker exec -it kind-worker mkdir shared-volume
-  docker exec -it kind-worker chmod 777 shared-volume
+  docker exec -it kind-worker rm -rf /tmp/shared-volume
+  docker exec -it kind-worker mkdir /tmp/shared-volume
+  docker exec -it kind-worker chmod 777 /tmp/shared-volume
+  sudo chmod 777 -R /home/$USER/data/
+  rm -rf /home/$USER/data/*
   kind load docker-image localhost:5000/vescollector:1.12.3-configured
   kind load docker-image localhost:5000/pm-rapp:latest
-  kind load docker-image localhost:5000/es-rapp:latest
   kind load docker-image localhost:5000/ts-rapp:latest
+  kind load docker-image nexus3.o-ran-sc.org:10003/o-ran-sc/nonrtric-plt-ranpm-datafilecollector:1.2.0-SNAPSHOT
 else
   # in case of pure Kubernetes
   docker image push localhost:5000/vescollector:1.12.3-configured || { echo "Docker image vescollector push failed. Exiting script."; exit 1; }
   docker image push localhost:5000/pm-rapp:latest || { echo "Docker image pm-rapp push failed. Exiting script."; exit 1; }
   docker image push localhost:5000/es-rapp:latest || { echo "Docker image es-rapp push failed. Exiting script."; exit 1; }
   docker image push localhost:5000/ts-rapp:latest || { echo "Docker image ts-rapp push failed. Exiting script."; exit 1; }
-  # since Postgres always creates DB with different password stored in it, we need to delete PV each time
-  kubectl delete pvc data-keycloak-postgresql-0
-  kubectl delete pv local-pv
   # delete and recreate directories: shared-volume (used for Volume Mount) and data (used for PV)
   manage_directories "/tmp/shared-volume" "/tmp/data"
   # delete and clone sim-o1 repo to path
   sudo rm -rf /tmp/sim-o1-ofhmp-interfaces/
   git clone https://github.com/o-ran-sc/sim-o1-ofhmp-interfaces.git /tmp/sim-o1-ofhmp-interfaces/
-  
-  kubectl apply -f helm/kubernetes_storage_class.yaml
-  kubectl apply -f helm/kubernetes_storage_pv.yaml
 fi
+
+kubectl apply -f helm/kubernetes_storage_class.yaml
+kubectl apply -f helm/kubernetes_storage_pv.yaml
 
 helm install --wait keycloak oci://registry-1.docker.io/bitnamicharts/keycloak -f helm/keyloak_values.yaml --version 24.4.13
 . scripts/populate_keycloak.sh

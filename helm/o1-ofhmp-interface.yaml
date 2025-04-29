@@ -18,6 +18,7 @@ spec:
       containers:
       - name: pynts
         image: localhost:5000/pynts-o-du-o1:0.9.1
+        #command: ["sleep", "infinity"]
         imagePullPolicy: IfNotPresent
         env:
         - name: ENDPOINT_COUNT

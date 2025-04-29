@@ -1,4 +1,11 @@
 {
+  "ves-rapp": {
+    "type": "message_router",
+    "dmaap_info": {
+      "location": "mtl5",
+      "topic_url": "http://message-router.nonrtric:3904/events/pmreports"
+    }
+  },
   "ves-syslog": {
     "type": "message_router",
     "dmaap_info": {

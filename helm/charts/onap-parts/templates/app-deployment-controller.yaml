@@ -47,6 +47,7 @@ spec:
             name: controller-certs.properties
       containers:
       - name: controller
+        priviledges: true
         image: nexus3.onap.org:10001/onap/sdnc-image:2.6.1
         imagePullPolicy: IfNotPresent
         env:
@@ -83,7 +84,7 @@ spec:
         - name: JAVA_OPTS
           value: -Xms256m -Xmx4g
         - name: IDENTITY_PROVIDER_URL
-          value: ""
+          value: "http://keycloak.nonrtric"
         - name: SDNC_WEB_URL
           value: "http://odlux.nonrtric:8080"
         - name: SDNR_VES_COLLECTOR_ENABLED
@@ -99,7 +100,7 @@ spec:
         - name: SDNR_VES_COLLECTOR_VERSION
           value: v7
         - name: SDNR_VES_COLLECTOR_REPORTING_ENTITY_NAME
-          value: ONAP SDN-R
+          value: "ONAP SDN-R"
         - name: SDNR_VES_COLLECTOR_EVENTLOG_MSG_DETAIL
           value: LONG
         - name: SDNR_VES_COLLECTOR_USERNAME
