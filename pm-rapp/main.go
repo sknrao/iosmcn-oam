@@ -55,7 +55,7 @@ type JobDefinition struct {
 	} `json:"job_definition"`
 }
 
-const jobdef = "/config/jobDefinition.json"
+var jobdef = os.Getenv("JOB_PATH")
 
 var rapp_id = os.Getenv("APPID")
 
@@ -115,6 +115,11 @@ func main() {
 	if creds_service_url != "" {
 		log.Warn("Disabling jwt retrieval from side car")
 		jwt_file = ""
+	}
+
+	if jobdef == "" {
+		log.Error("Env JOB_PATH not set")
+		os.Exit(1)
 	}
 
 	if rapp_id == "" {

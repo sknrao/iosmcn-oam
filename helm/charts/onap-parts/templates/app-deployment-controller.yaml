@@ -47,7 +47,6 @@ spec:
             name: controller-certs.properties
       containers:
       - name: controller
-        priviledges: true
         image: nexus3.onap.org:10001/onap/sdnc-image:2.6.1
         imagePullPolicy: IfNotPresent
         env:

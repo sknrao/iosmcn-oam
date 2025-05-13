@@ -25,13 +25,15 @@ metadata:
 spec:
   containers:
   - name: ts-rapp
-    image: localhost:5000/ts-rapp:v7
+    image: localhost:5000/ts-rapp:latest
     command: ["sleep", "infinity"]
     imagePullPolicy: IfNotPresent
     ports:
     - name: http
       containerPort: 80
     env:
+    - name: USE_O1_SIMULATOR
+      value: "true"
     - name: VIAVI_ADDRESS
       value: "172.21.0.1"
     - name: VIAVI_PORT

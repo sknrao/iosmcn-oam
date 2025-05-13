@@ -19,6 +19,10 @@ spec:
       - name: pynts
         image: localhost:5000/pynts-o-du-o1:0.9.1
         #command: ["sleep", "infinity"]
+        securityContext:
+           capabilities:
+              add: [ "IPC_LOCK", "NET_ADMIN", "SYS_ADMIN", "IPC_OWNER"]
+           privileged: true
         imagePullPolicy: IfNotPresent
         env:
         - name: ENDPOINT_COUNT

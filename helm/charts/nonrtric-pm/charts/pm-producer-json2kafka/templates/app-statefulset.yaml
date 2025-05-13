@@ -93,5 +93,5 @@ spec:
           emptyDir: {}
         - name: shared-volume
           hostPath:
-            path: /shared-volume
+            path: /tmp/shared-volume
             type: Directory

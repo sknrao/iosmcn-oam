@@ -1,0 +1,35 @@
+{
+    "config": {
+        "log-period": 60,
+        "repetition-period": 180,
+
+        "points": [
+            "RRU.PrbUsedDl",
+            "Viavi.Frequency",
+            "Viavi.Cell.Name"
+        ]
+    },
+
+    "values": [
+        {
+            "RRU.PrbUsedDl": 100,
+            "Viavi.Frequency": 1900,
+            "Viavi.Cell.Name": "S1/B39/C1"
+        },
+        {
+            "RRU.PrbUsedDl": 99,
+            "Viavi.Frequency": 3600,
+            "Viavi.Cell.Name": "S2/N77/C1"
+        },
+        {
+            "RRU.PrbUsedDl": 30,
+            "Viavi.Frequency": 2300,
+            "Viavi.Cell.Name": "S3/N77/C1"
+        },
+        {
+            "RRU.PrbUsedDl": 5,
+            "Viavi.Frequency": 2300,
+            "Viavi.Cell.Name": "S4/B40/C1"
+        }
+    ]
+}

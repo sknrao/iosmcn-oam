@@ -136,6 +136,7 @@ if [ $KIND == "true" ]; then
   kind load docker-image localhost:5000/pm-rapp:latest
   kind load docker-image localhost:5000/ts-rapp:latest
   kind load docker-image nexus3.o-ran-sc.org:10003/o-ran-sc/nonrtric-plt-ranpm-datafilecollector:1.2.0-SNAPSHOT
+  # TODO add sim-o1-ofhmp-interface repo
 else
   # in case of pure Kubernetes
   docker image push localhost:5000/vescollector:1.12.3-configured || { echo "Docker image vescollector push failed. Exiting script."; exit 1; }
@@ -147,6 +148,15 @@ else
   # delete and clone sim-o1 repo to path
   sudo rm -rf /tmp/sim-o1-ofhmp-interfaces/
   git clone https://github.com/o-ran-sc/sim-o1-ofhmp-interfaces.git /tmp/sim-o1-ofhmp-interfaces/
+  pushd /tmp/sim-o1-ofhmp-interfaces/
+  git checkout 1f6db7bef7f7d64f96406c9654dadd656413da7e
+  # SDN Controller complained about Netconf over TLS, thus we switch to Netconf over SSH
+  cp o-ru-mplane/data/ietf-netconf-server-ssh-listen.json o-du-o1/data/ietf-netconf-server-running.json
+  # administrativeState is not there by default, thus we are adding it here
+  sed -i '23i\                  "administrativeState": "LOCKED",' o-du-o1/data/_3gpp-common-managed-element-running.json
+  popd
+  # adding our simulated event json
+  cp ts_rapp_viavi-main/viavi_simulated_event.json /tmp/sim-o1-ofhmp-interfaces/o-du-o1/data/performance-management/index.json
 fi
 
 kubectl apply -f helm/kubernetes_storage_class.yaml
@@ -190,7 +200,7 @@ while [ $retcode -eq 1 ]; do
         retcode=1
         sleep 1
     elif [ "$CONFIG" == "{}" ]; then
-        echo "Configuring dbBBBBBBBBBBBBBBBBBB"
+        echo "Configuring DB."
         retcode=1
         sleep 1
         #kubectl exec -n nonrtric influxdb2-0 -- influx setup -u admin -p mySuP3rS3cr3tT0keN -o est -b pm-bucket -f

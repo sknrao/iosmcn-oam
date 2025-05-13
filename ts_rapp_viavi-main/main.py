@@ -1,4 +1,4 @@
-## TODO import traffic steering algorithm here!!
+# TODO add TS algorithm
 
 import random
 import requests
@@ -30,7 +30,44 @@ class ViaviCell:
         self.url = url
         self.nr_cell_relations = []
 
-class ViaviManager:
+class O1ManagerBase:
+    def adjust_cell_offset(self, cell_name, new_offset_value):
+        raise NotImplementedError
+
+    def fetch_cell_data(self):
+        raise NotImplementedError
+
+class O1SimulatorManager(O1ManagerBase):
+    def __init__(self):
+        self.url_base = "http://controller:8181/rests/data/"
+        self.url = self.url_base + "network-topology:network-topology/topology=topology-netconf/node={}/yang-ext:mount/_3gpp-common-managed-element:ManagedElement=ManagedElement-002/_3gpp-nr-nrm-gnbdufunction:GNBDUFunction=GNBDUFunction-001/_3gpp-nr-nrm-nrcelldu:NRCellDU=NRCellDU-001/attributes/administrativeState"
+        self.user = "admin"
+        self.password = "Kp8bJ4SXszM0WXlhak3eHlcse2gAw84vaoGGmJvUy2U"
+        self.headers = {'Content-type': 'application/yang-data+json', 'Accept': 'application/yang-data+json'}
+        self.o1_simulator_node_id = None
+
+    def fetch_cell_data(self):
+        log.info("Fetching data")
+        response = requests.get(self.url_base, auth=(self.user, self.password), headers=self.headers, verify=False)
+        if not response.ok:
+            log.warning("Fetching cell data from O1-simulator failed: " + str(response))
+        node_id = None
+        for node in response.json()['network-topology:network-topology']['topology'][0]['node']:
+            if node['netconf-node-topology:connection-status'] == "connected":
+                if node_id is not None:
+                    log.warning("Multiple O1-simulators seem to be Connected at the same time!")
+                node_id = node['node-id']
+        log.info("O1 simulator node name found: " + node_id)
+        self.o1_simulator_node_id = node_id
+
+    def adjust_cell_offset(self, cell_name, new_offset_value):
+        log.info("path is: " + self.url.format(self.o1_simulator_node_id))
+        response = requests.get(self.url.format(self.o1_simulator_node_id), auth=(self.user, self.password), headers=self.headers, verify=False)
+        if not response.ok:
+            log.warning("Adjusting cells failed: " + str(response))
+        log.info('Response is: {}'.format(response.json()))
+
+class ViaviManager(O1ManagerBase):
     def __init__(self):
         self.cell_url_base = "/O1/CM/"
         ## I do not know why is this number always the same. Thus, we have it hardcoded here.
@@ -125,18 +162,20 @@ class KafkaClient:
 
 class ComputationWorker():
     def __init__(self):
-        self.viavi_manager = ViaviManager()
+        if os.environ['USE_O1_SIMULATOR'] == "true":
+            self.o1_manager = O1SimulatorManager()
+        else:
+            self.o1_manager = ViaviManager()
         self.kafka_consumer = KafkaClient()
 
-        #self.traffic_steering_rapp = # TODO define traffic steering app here
-        
-    )
+        # TODO add TS algorithm
+
 
     def work(self):
         log.info("Starting ComputingWorker")
 
         self.kafka_consumer.subscribe_to_rapp_topic()
-        self.viavi_manager.fetch_cell_data()
+        self.o1_manager.fetch_cell_data()
         while True:
             time.sleep(5)
             msg = self.kafka_consumer.poll_message()
@@ -180,13 +219,14 @@ class ComputationWorker():
             else:
                 log.info('Offsets set by the algorithm: {}.'.format(new_offsets))
             for cell_name in new_offsets:
-                self.viavi_manager.adjust_cell_offset(cell_name, new_offsets[cell_name])
+                self.o1_manager.adjust_cell_offset(cell_name, new_offsets[cell_name])
 
         log.info("Kafka consumer closing connection...")
         self.kafka_consumer.close()
 
     def run_algorithm(self, input_data, time):
-        ### TODO ADD algorithm here!!
+        # TODO add TS algorithm
+
         return offsets
 
 if __name__ == "__main__":

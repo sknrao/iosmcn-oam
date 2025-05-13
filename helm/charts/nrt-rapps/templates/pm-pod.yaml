@@ -25,7 +25,7 @@ metadata:
 spec:
   containers:
   - name: pm-rapp
-    image: localhost:5000/pm-rapp:ts_rapp
+    image: localhost:5000/pm-rapp:latest
     imagePullPolicy: IfNotPresent
     ports:
     - name: http
@@ -39,6 +39,8 @@ spec:
       valueFrom:
         fieldRef:
           fieldPath: metadata.namespace
+    - name: JOB_PATH
+      value: "/config/jobDefinitionO1Simulator.json" #"/config/jobDefinition.json" # "/config/jobDefinitionO1Simulator.json"
     - name: KAFKA_SERVER
       value: kafka-1-kafka-bootstrap.nonrtric
     - name: CONSUMER_PORT

@@ -23,3 +23,4 @@ metadata:
 
 data:
 {{ (.Files.Glob "config/jobDefinition.json").AsConfig | nindent 2 }}
+{{ (.Files.Glob "config/jobDefinitionO1Simulator.json").AsConfig | nindent 2 }}
