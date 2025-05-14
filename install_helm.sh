@@ -152,9 +152,9 @@ else
   git checkout 1f6db7bef7f7d64f96406c9654dadd656413da7e
   # SDN Controller complained about Netconf over TLS, thus we switch to Netconf over SSH
   cp o-ru-mplane/data/ietf-netconf-server-ssh-listen.json o-du-o1/data/ietf-netconf-server-running.json
-  # administrativeState is not there by default, thus we are adding it here
-  sed -i '23i\                  "administrativeState": "LOCKED",' o-du-o1/data/_3gpp-common-managed-element-running.json
   popd
+  # copying our cell data
+  cp ts_rapp_viavi-main/_3gpp-common-managed-element-running.json /tmp/sim-o1-ofhmp-interfaces/o-du-o1/data/_3gpp-common-managed-element-running.json
   # adding our simulated event json
   cp ts_rapp_viavi-main/viavi_simulated_event.json /tmp/sim-o1-ofhmp-interfaces/o-du-o1/data/performance-management/index.json
 fi

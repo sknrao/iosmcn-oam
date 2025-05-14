@@ -26,7 +26,7 @@ spec:
   containers:
   - name: es-rapp
     image: localhost:5000/es-rapp:latest
-    imagePullPolicy: IfNotPresent
+    imagePullPolicy: Always
     env:
     - name: SDN_CONTROLLER_ADDRESS
       value: "172.17.0.1"

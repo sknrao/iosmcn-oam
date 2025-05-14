@@ -1,5 +1,4 @@
-# TODO add TS algorithm
-
+#TODO add algorithm
 import random
 import requests
 import logging
@@ -40,7 +39,7 @@ class O1ManagerBase:
 class O1SimulatorManager(O1ManagerBase):
     def __init__(self):
         self.url_base = "http://controller:8181/rests/data/"
-        self.url = self.url_base + "network-topology:network-topology/topology=topology-netconf/node={}/yang-ext:mount/_3gpp-common-managed-element:ManagedElement=ManagedElement-002/_3gpp-nr-nrm-gnbdufunction:GNBDUFunction=GNBDUFunction-001/_3gpp-nr-nrm-nrcelldu:NRCellDU=NRCellDU-001/attributes/administrativeState"
+        self.url = self.url_base + "network-topology:network-topology/topology=topology-netconf/node={}/yang-ext:mount/_3gpp-common-managed-element:ManagedElement=ManagedElement-002/_3gpp-nr-nrm-gnbdufunction:GNBDUFunction=GNBDUFunction-001/_3gpp-nr-nrm-nrcelldu:NRCellDU={}/attributes/ssbOffset"
         self.user = "admin"
         self.password = "Kp8bJ4SXszM0WXlhak3eHlcse2gAw84vaoGGmJvUy2U"
         self.headers = {'Content-type': 'application/yang-data+json', 'Accept': 'application/yang-data+json'}
@@ -51,6 +50,10 @@ class O1SimulatorManager(O1ManagerBase):
         response = requests.get(self.url_base, auth=(self.user, self.password), headers=self.headers, verify=False)
         if not response.ok:
             log.warning("Fetching cell data from O1-simulator failed: " + str(response))
+            return
+        if 'node' not in response.json()['network-topology:network-topology']['topology'][0]:
+            log.info("Fetching data from SDN Controller successfull, but no nodes retrieved yet.")
+            return
         node_id = None
         for node in response.json()['network-topology:network-topology']['topology'][0]['node']:
             if node['netconf-node-topology:connection-status'] == "connected":
@@ -61,11 +64,22 @@ class O1SimulatorManager(O1ManagerBase):
         self.o1_simulator_node_id = node_id
 
     def adjust_cell_offset(self, cell_name, new_offset_value):
-        log.info("path is: " + self.url.format(self.o1_simulator_node_id))
-        response = requests.get(self.url.format(self.o1_simulator_node_id), auth=(self.user, self.password), headers=self.headers, verify=False)
+        if self.o1_simulator_node_id is None:
+            self.fetch_cell_data()
+        current_offset = requests.get(self.url.format(self.o1_simulator_node_id, cell_name), auth=(self.user, self.password), headers=self.headers, verify=False).json()['_3gpp-nr-nrm-nrcelldu:ssbOffset']
+        log.info("Current offset for cell {} is {}.".format(cell_name, str(current_offset)))
+        print(requests.get(self.url.format(self.o1_simulator_node_id, cell_name), auth=(self.user, self.password), headers=self.headers, verify=False).json())
+        # TODO float does not work, thus using int
+        payload = {'_3gpp-nr-nrm-nrcelldu:ssbOffset': int(new_offset_value)}
+        #if current_state == 'UNLOCKED':
+        #    payload = {'_3gpp-nr-nrm-nrcelldu:administrativeState': 'LOCKED'}
+        #else:
+        #    payload = {'_3gpp-nr-nrm-nrcelldu:administrativeState': 'UNLOCKED'}
+        log.info("path is: " + self.url.format(self.o1_simulator_node_id, cell_name))
+        response = requests.put(self.url.format(self.o1_simulator_node_id, cell_name), auth=(self.user, self.password), json=payload)
         if not response.ok:
             log.warning("Adjusting cells failed: " + str(response))
-        log.info('Response is: {}'.format(response.json()))
+        log.info('Response status code is: {}'.format(response.status_code))
 
 class ViaviManager(O1ManagerBase):
     def __init__(self):
@@ -168,8 +182,10 @@ class ComputationWorker():
             self.o1_manager = ViaviManager()
         self.kafka_consumer = KafkaClient()
 
-        # TODO add TS algorithm
+        #TODO add algorithm
 
+
+    )
 
     def work(self):
         log.info("Starting ComputingWorker")
@@ -225,9 +241,8 @@ class ComputationWorker():
         self.kafka_consumer.close()
 
     def run_algorithm(self, input_data, time):
-        # TODO add TS algorithm
+        #TODO add algorithm
 
-        return offsets
 
 if __name__ == "__main__":
     worker = ComputationWorker()

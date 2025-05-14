@@ -14,22 +14,22 @@
         {
             "RRU.PrbUsedDl": 100,
             "Viavi.Frequency": 1900,
-            "Viavi.Cell.Name": "S1/B39/C1"
+            "Viavi.Cell.Name": "NRCellDU-001"
         },
         {
             "RRU.PrbUsedDl": 99,
             "Viavi.Frequency": 3600,
-            "Viavi.Cell.Name": "S2/N77/C1"
+            "Viavi.Cell.Name": "NRCellDU-002"
         },
         {
             "RRU.PrbUsedDl": 30,
             "Viavi.Frequency": 2300,
-            "Viavi.Cell.Name": "S3/N77/C1"
+            "Viavi.Cell.Name": "NRCellDU-003"
         },
         {
             "RRU.PrbUsedDl": 5,
             "Viavi.Frequency": 2300,
-            "Viavi.Cell.Name": "S4/B40/C1"
+            "Viavi.Cell.Name": "NRCellDU-004"
         }
     ]
 }
