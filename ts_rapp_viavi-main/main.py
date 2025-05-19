@@ -1,4 +1,4 @@
-#TODO add algorithm
+#TODO
 import random
 import requests
 import logging
@@ -18,22 +18,25 @@ random.seed(2)
 
 
 class Cell:
-    def __init__(self, name, load, frequency):
+    def __init__(self, name: str, load: float, frequency: float):
         self.name = name
         self.load = load
         self.frequency = frequency
 
 class ViaviCell:
-    def __init__(self, name, url):
+    def __init__(self, id: int, name: str):
+        self.id = id
         self.name = name
-        self.url = url
         self.nr_cell_relations = []
 
 class O1ManagerBase:
-    def adjust_cell_offset(self, cell_name, new_offset_value):
+    def adjust_cell_offset(self, cell_id, new_offset_value):
         raise NotImplementedError
 
     def fetch_cell_data(self):
+        raise NotImplementedError
+
+    def get_cell_id_from_name(self, name):
         raise NotImplementedError
 
 class O1SimulatorManager(O1ManagerBase):
@@ -85,30 +88,33 @@ class ViaviManager(O1ManagerBase):
     def __init__(self):
         self.cell_url_base = "/O1/CM/"
         ## I do not know why is this number always the same. Thus, we have it hardcoded here.
-        self.cell_url_managed_element = "ManagedElement=1193046"
+        self.cell_url_managed_element_part = "ManagedElement=1193046"
+        self.cell_url_cucp_function_part = self.cell_url_managed_element_part + ",GnbCuCpFunction=1,NrCellCu="
         self.url_prefix = "http://"
         self.viavi_address = os.environ['VIAVI_ADDRESS']
         self.viavi_port = os.environ['VIAVI_PORT']
         self.viavi_auth = os.environ['VIAVI_USER'], os.environ['VIAVI_PASS']
         self.cell_data = {}
+        self.cell_data_by_id = {}
 
-    def adjust_cell_offset(self, cell_name, new_offset_value):
+    def adjust_cell_offset(self, cell_id, new_offset_value):
         if len(self.cell_data) == 0:
             self.fetch_cell_data()
-        cell = self.cell_data[cell_name]
+        cell = self.cell_data_by_id[cell_id]
         # For now, we assume offset value should be the same for all relations of one cell. So, below we set the new value for all cell's relations.
         for cell_relation_id in cell.nr_cell_relations:
-            url = self.url_prefix + self.viavi_address + ':' + self.viavi_port + self.cell_url_base + cell.url + ',NRCellRelation=' + str(cell_relation_id)
+            url = self.url_prefix + self.viavi_address + ':' + self.viavi_port + self.cell_url_base + self.cell_url_cucp_function_part + str(cell.id) + ',NRCellRelation=' + str(cell_relation_id)
             #print("Data before change: " + str(requests.get(url, auth=self.viavi_auth).json()))
             log.info("Adjusting offset on " + url + " with new value " + str(new_offset_value))
-            payload = { "attributes": { "cellIndividualOffset": {"rsrpOffsetSsb": new_offset_value, "rsrqOffsetSsb": new_offset_value, "sinrOffsetSsb": new_offset_value } } }
+
+            payload = { "attributes": { "cellIndividualOffset": {"rsrpOffsetSsb": new_offset_value, "rsrqOffsetSsb": 0, "sinrOffsetSsb": 0 } } }
             response = requests.put(url, auth=self.viavi_auth, json=payload)
             if not response.ok:
                 raise Exception("Adjusting cell data from Viavi failed: " + str(response))
             #print("Data after change: " + str(requests.get(url, auth=self.viavi_auth).json()))
 
     def fetch_cell_data(self):
-        url = self.url_prefix + self.viavi_address + ':' + self.viavi_port + self.cell_url_base + self.cell_url_managed_element
+        url = self.url_prefix + self.viavi_address + ':' + self.viavi_port + self.cell_url_base + self.cell_url_managed_element_part
         log.info("Fetch cells on url " + url)
         response = requests.get(url, auth=self.viavi_auth)
         if not response.ok:
@@ -118,18 +124,23 @@ class ViaviManager(O1ManagerBase):
             raise Exception("Unexpected number of GnbCuCpFunctions received from Viavi!")
         data = gnb_function[0]
         for cell in data['NrCellCu']:
+            cell_id = int(cell['id'])
             cell_name = cell['viavi-attributes']['cellName']
-            url = cell['objectInstance']
-            self.cell_data[cell_name] = ViaviCell(cell_name, url)
+            viavi_cell = ViaviCell(cell_id, cell_name)
             #print(cell['NRCellRelation'])
             for cell_relation in cell['NRCellRelation']:
                 offsets = cell_relation['attributes']['cellIndividualOffset']
                 # We assume that all three offsets are the same, but we should check just to be sure
-                if len({offsets['rsrpOffsetSsb'], offsets['rsrqOffsetSsb'], offsets['sinrOffsetSsb']}) != 1:
-                    log.warning("Offsets do not match!")
+                #if len({offsets['rsrpOffsetSsb'], offsets['rsrqOffsetSsb'], offsets['sinrOffsetSsb']}) != 1:
+                 #   log.warning("Offsets do not match!")
                 # We can store current offset as well here, but we did not need it for now, so let's save memory. But, it can be added in the future.
-                self.cell_data[cell_name].nr_cell_relations.append(int(cell_relation['id']))
+                viavi_cell.nr_cell_relations.append(int(cell_relation['id']))
+            self.cell_data[cell_name] = viavi_cell
+            self.cell_data_by_id[cell_id] = viavi_cell
             log.info('Adding cell {} and its relations {}.'.format(cell_name, str(self.cell_data[cell_name].nr_cell_relations)))
+
+    def get_cell_id_from_name(self, name):
+        return self.cell_data[name].id
 
 class KafkaClient:
     def __init__(self):
@@ -182,14 +193,12 @@ class ComputationWorker():
             self.o1_manager = ViaviManager()
         self.kafka_consumer = KafkaClient()
 
-        #TODO add algorithm
-
-
+        #TODO
     )
 
     def work(self):
         log.info("Starting ComputingWorker")
-
+        cell_info_set = False
         self.kafka_consumer.subscribe_to_rapp_topic()
         self.o1_manager.fetch_cell_data()
         while True:
@@ -209,7 +218,7 @@ class ComputationWorker():
             log.info("Kafka topic received Viavi_perf3gpp event from Viavi!")
             input_data_parsed = {}
             # json includes measTypes specifying order of values later on, so we need to determine that
-            dl_load_key_id = json_data['event']['perf3gppFields']['measDataCollection']['measInfoList'][0]['measTypes']['sMeasTypesList'].index("RRU.PrbUsedDl") + 1
+            dl_load_key_id = json_data['event']['perf3gppFields']['measDataCollection']['measInfoList'][0]['measTypes']['sMeasTypesList'].index("RRU.PrbTotDl") + 1
             frequency_key_id = json_data['event']['perf3gppFields']['measDataCollection']['measInfoList'][0]['measTypes']['sMeasTypesList'].index("Viavi.Frequency") + 1
             cell_name_id = json_data['event']['perf3gppFields']['measDataCollection']['measInfoList'][0]['measTypes']['sMeasTypesList'].index("Viavi.Cell.Name") + 1
             for meas in json_data['event']['perf3gppFields']['measDataCollection']['measInfoList'][0]['measValuesList']:
@@ -220,29 +229,53 @@ class ComputationWorker():
                     if key == cell_name_id:
                         cell_name = value
                     elif key == dl_load_key_id:
-                        cell_load = value
+                        cell_load = float(value)/100
                     elif key == frequency_key_id:
-                        cell_frequency = value
-                log.info('Received metric: Cell_name: {}, Load: {}, Frequency: {}.'.format(cell_name, cell_load, cell_frequency))
+                        cell_frequency = float(value)
+                log.info('Received metric: Cell_name: {}, Load: {}, Frequency: {}.'.format(cell_name, str(cell_load), str(cell_frequency)))
                 if cell_name in input_data_parsed:
                     log.warning('Duplicate cell name appeared!')
                 if cell_name is None and cell_load is None and cell_frequency is None:
                     log.warning('Either cell name, load or frequency was not received!')
                 input_data_parsed[cell_name] = Cell(cell_name, cell_load, cell_frequency)
-            new_offsets = self.run_algorithm(input_data_parsed, time.time())
+            new_offsets = self.run_algorithm(input_data_parsed, time.time(), cell_info_set)
+            cell_info_set = True
             if len(new_offsets) == 0:
                 log.info("No cell offset changes for now.")
             else:
                 log.info('Offsets set by the algorithm: {}.'.format(new_offsets))
-            for cell_name in new_offsets:
-                self.o1_manager.adjust_cell_offset(cell_name, new_offsets[cell_name])
+            for cell_id in new_offsets:
+                self.o1_manager.adjust_cell_offset(cell_id, new_offsets[cell_id])
 
         log.info("Kafka consumer closing connection...")
         self.kafka_consumer.close()
 
-    def run_algorithm(self, input_data, time):
-        #TODO add algorithm
+    def run_algorithm(self, input_data, time, cell_info_set):
+        """
+        Example of parameters for the run_algorithm method:
+        timstamp_s: float - The timestamp in seconds for the algorithm run.
+        cells_id: List[int] - List of cell IDs.
+        cells_load: List[float] - List of load values for each cell, range (0.0 - 1.0).
+        cells_freq_mhz: List[float] - List of frequency values for each cell in MHz.
+        """
+        log.info("Computing cell offsets...")
 
+        cell_ids, cell_loads, cell_frequencies = [], [], []
+        for cell in input_data.values():
+            cell_ids.append(self.o1_manager.get_cell_id_from_name(cell.name))
+            cell_loads.append(cell.load)
+            cell_frequencies.append(cell.frequency)
+        if cell_info_set:
+            log.info("Cells already uploaded.")
+        else:
+            log.info("Adding cells to TS")
+            self.traffic_steering_rapp.update_cell_list(cell_ids, cell_frequencies)
+        # Run the algorithm and get offsets
+       #TODO
+        """
+        Offsets set by the algorithm {cell_id: cell_individual_offset}
+        """
+        return offsets
 
 if __name__ == "__main__":
     worker = ComputationWorker()

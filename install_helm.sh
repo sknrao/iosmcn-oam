@@ -131,7 +131,9 @@ if [ $KIND == "true" ]; then
   docker exec -it kind-worker mkdir /tmp/shared-volume
   docker exec -it kind-worker chmod 777 /tmp/shared-volume
   sudo chmod 777 -R /home/$USER/data/
+  sudo chmod 777 -R /home/$USER/data2/
   rm -rf /home/$USER/data/*
+  rm -rf /home/$USER/data2/*
   kind load docker-image localhost:5000/vescollector:1.12.3-configured
   kind load docker-image localhost:5000/pm-rapp:latest
   kind load docker-image localhost:5000/ts-rapp:latest
