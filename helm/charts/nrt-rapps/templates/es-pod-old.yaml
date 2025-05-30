@@ -25,37 +25,49 @@ metadata:
 spec:
   containers:
   - name: es-rapp
-    image: localhost:5000/es-rapp:latest
+    image: busybox #localhost:5000/es-rapp:latest
+    command: ["sleep", "infinity"]
     imagePullPolicy: Always
     env:
+    - name: SDN_CONTROLLER_ADDRESS
+      value: "172.17.0.1"
+    - name: SDN_CONTROLLER_PORT
+      value: "80"
+    - name: SDN_CONTROLLER_USERNAME
+      value: "root"
+    - name: SDN_CONTROLLER_PASSWORD
+      value: "viavi"
+    - name: A1T_ADDRESS
+      value: "172.17.0.1"
+    - name: A1T_PORT
+      value: "80"
     - name: LOAD_PREDICTOR
-      value: "load-predictor"
+      value: "dummy"
     - name: LOAD_PREDICTOR_PORT
-      value: "9098"
+      value: "dummy"
     - name: LOAD_PREDICTOR_API
       value: "predict"
-    - name: SDN_CONTROLLER_ADDRESS
-      value: ""
-    - name: SDN_CONTROLLER_PORT
-      value: ""
-    - name: SDN_CONTROLLER_USERNAME
-      value: ""
-    - name: SDN_CONTROLLER_PASSWORD
-      value: ""
-#    - name: CREDS_CLIENT_SECRET
-#      value: {{ .Values.esrapp.clientsecret }}
-#    - name: CREDS_CLIENT_ID
-#      value: es-rapp
-#    - name: AUTH_SERVICE_URL
-#      value: http://keycloak.nonrtric/realms/nonrtric-realm/protocol/openid-connect/token
+    - name: RANSIM_DATA_PATH
+      value: /input/prb_usage_reports
+    - name: CREDS_CLIENT_SECRET
+      value: {{ .Values.esrapp.clientsecret }}
+    - name: CREDS_CLIENT_ID
+      value: es-rapp
+    - name: AUTH_SERVICE_URL
+      value: http://keycloak.nonrtric/realms/nonrtric-realm/protocol/openid-connect/token
     - name: TOPIC
       value: forward-rapp-topic
     - name: KAFKA_SERVER
-      value: kafka-1-kafka-bootstrap.nonrtric:9092
-    - name: APPID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-  - name: load-predictor
-    image: localhost:5000/load-predictor:latest
-    imagePullPolicy: Always
+      value: kafka-1-kafka-bootstrap.nonrtric:9097
+    - name: FUNC
+      value: "f2"
+    volumeMounts:
+    - mountPath: /input/prb_usage_reports
+      name: shared-data2
+
+  volumes:
+  - configMap:
+      name: pm-rapp-jobdef
+    name: pm-rapp-jobdef
+  - name: shared-data2
+    emptyDir: {}

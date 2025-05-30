@@ -164,7 +164,14 @@ fi
 kubectl apply -f helm/kubernetes_storage_class.yaml
 kubectl apply -f helm/kubernetes_storage_pv.yaml
 
-helm install --wait keycloak oci://registry-1.docker.io/bitnamicharts/keycloak -f helm/keyloak_values.yaml --version 24.4.13
+
+if helm repo list | grep -q 'bitnami'; then
+    echo "Bitnami repo already exists. Skipping add."
+else
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+    helm repo update
+fi
+helm install --wait bitnami/keycloak -f helm/keyloak_values.yaml --version 24.4.13
 . scripts/populate_keycloak.sh
 
 # Create realm in keycloak

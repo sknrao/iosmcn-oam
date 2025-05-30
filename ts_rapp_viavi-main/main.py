@@ -1,4 +1,4 @@
-#TODO
+##TODO
 import random
 import requests
 import logging
@@ -24,10 +24,17 @@ class Cell:
         self.frequency = frequency
 
 class ViaviCell:
-    def __init__(self, id: int, name: str):
+    def __init__(self, id: int, name: str, uri: str):
         self.id = id
         self.name = name
+        self.uri = uri
         self.nr_cell_relations = []
+
+class ViaviCellRelation:
+    def __init__(self, id: int, uri: str, opposite_cell_uri: str):
+        self.id = id
+        self.uri = uri
+        self.opposite_cell_uri = opposite_cell_uri
 
 class O1ManagerBase:
     def adjust_cell_offset(self, cell_id, new_offset_value):
@@ -39,7 +46,7 @@ class O1ManagerBase:
     def get_cell_id_from_name(self, name):
         raise NotImplementedError
 
-class O1SimulatorManager(O1ManagerBase):
+class O1SimulatorManager(O1ManagerBase): # NOTE: This is outdated now. Will probably need some adjustments in order to work
     def __init__(self):
         self.url_base = "http://controller:8181/rests/data/"
         self.url = self.url_base + "network-topology:network-topology/topology=topology-netconf/node={}/yang-ext:mount/_3gpp-common-managed-element:ManagedElement=ManagedElement-002/_3gpp-nr-nrm-gnbdufunction:GNBDUFunction=GNBDUFunction-001/_3gpp-nr-nrm-nrcelldu:NRCellDU={}/attributes/ssbOffset"
@@ -89,25 +96,28 @@ class ViaviManager(O1ManagerBase):
         self.cell_url_base = "/O1/CM/"
         ## I do not know why is this number always the same. Thus, we have it hardcoded here.
         self.cell_url_managed_element_part = "ManagedElement=1193046"
-        self.cell_url_cucp_function_part = self.cell_url_managed_element_part + ",GnbCuCpFunction=1,NrCellCu="
+        #self.cell_url_cucp_function_part = self.cell_url_managed_element_part + ",GnbCuCpFunction=1,NrCellCu="
         self.url_prefix = "http://"
         self.viavi_address = os.environ['VIAVI_ADDRESS']
         self.viavi_port = os.environ['VIAVI_PORT']
         self.viavi_auth = os.environ['VIAVI_USER'], os.environ['VIAVI_PASS']
         self.cell_data = {}
         self.cell_data_by_id = {}
+        self.cell_data_by_uri = {}
 
-    def adjust_cell_offset(self, cell_id, new_offset_value):
+    def adjust_cell_offset(self, cell_id, new_offset_values):
         if len(self.cell_data) == 0:
             self.fetch_cell_data()
         cell = self.cell_data_by_id[cell_id]
         # For now, we assume offset value should be the same for all relations of one cell. So, below we set the new value for all cell's relations.
-        for cell_relation_id in cell.nr_cell_relations:
-            url = self.url_prefix + self.viavi_address + ':' + self.viavi_port + self.cell_url_base + self.cell_url_cucp_function_part + str(cell.id) + ',NRCellRelation=' + str(cell_relation_id)
+        for cell_relation in cell.nr_cell_relations:
+            opposite_cell_id = self.cell_data_by_uri[cell_relation.opposite_cell_uri].id
+            new_offset_value = new_offset_values[opposite_cell_id]
+            url = self.url_prefix + self.viavi_address + ':' + self.viavi_port + self.cell_url_base + cell_relation.uri
             #print("Data before change: " + str(requests.get(url, auth=self.viavi_auth).json()))
             log.info("Adjusting offset on " + url + " with new value " + str(new_offset_value))
 
-            payload = { "attributes": { "cellIndividualOffset": {"rsrpOffsetSsb": new_offset_value, "rsrqOffsetSsb": 0, "sinrOffsetSsb": 0 } } }
+            payload = { "attributes": { "cellIndividualOffset": {"rsrpOffsetSsb": new_offset_value, "rsrqOffsetSsb": new_offset_value, "sinrOffsetSsb": 0 } } }
             response = requests.put(url, auth=self.viavi_auth, json=payload)
             if not response.ok:
                 raise Exception("Adjusting cell data from Viavi failed: " + str(response))
@@ -126,18 +136,22 @@ class ViaviManager(O1ManagerBase):
         for cell in data['NrCellCu']:
             cell_id = int(cell['id'])
             cell_name = cell['viavi-attributes']['cellName']
-            viavi_cell = ViaviCell(cell_id, cell_name)
+            cell_uri = cell['objectInstance']
+            viavi_cell = ViaviCell(cell_id, cell_name, cell_uri)
             #print(cell['NRCellRelation'])
             for cell_relation in cell['NRCellRelation']:
                 offsets = cell_relation['attributes']['cellIndividualOffset']
+                relation_uri = cell_relation['objectInstance']
                 # We assume that all three offsets are the same, but we should check just to be sure
                 #if len({offsets['rsrpOffsetSsb'], offsets['rsrqOffsetSsb'], offsets['sinrOffsetSsb']}) != 1:
                  #   log.warning("Offsets do not match!")
                 # We can store current offset as well here, but we did not need it for now, so let's save memory. But, it can be added in the future.
-                viavi_cell.nr_cell_relations.append(int(cell_relation['id']))
+                opposite_cell_uri = cell_relation['attributes']['adjacentNRCellRef']
+                viavi_cell.nr_cell_relations.append(ViaviCellRelation(int(cell_relation['id']), relation_uri, opposite_cell_uri))
             self.cell_data[cell_name] = viavi_cell
             self.cell_data_by_id[cell_id] = viavi_cell
-            log.info('Adding cell {} and its relations {}.'.format(cell_name, str(self.cell_data[cell_name].nr_cell_relations)))
+            self.cell_data_by_uri[cell_uri] = viavi_cell
+            log.info('Adding cell {} and its relations.'.format(cell_name))
 
     def get_cell_id_from_name(self, name):
         return self.cell_data[name].id
@@ -193,7 +207,8 @@ class ComputationWorker():
             self.o1_manager = ViaviManager()
         self.kafka_consumer = KafkaClient()
 
-        #TODO
+       ##TODO
+
     )
 
     def work(self):
@@ -270,8 +285,7 @@ class ComputationWorker():
         else:
             log.info("Adding cells to TS")
             self.traffic_steering_rapp.update_cell_list(cell_ids, cell_frequencies)
-        # Run the algorithm and get offsets
-       #TODO
+        ## TODO
         """
         Offsets set by the algorithm {cell_id: cell_individual_offset}
         """
