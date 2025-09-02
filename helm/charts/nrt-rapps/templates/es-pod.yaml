@@ -35,13 +35,13 @@ spec:
     - name: LOAD_PREDICTOR_API
       value: "predict"
     - name: SDN_CONTROLLER_ADDRESS
-      value: ""
+      value: "172.21.0.1"
     - name: SDN_CONTROLLER_PORT
-      value: ""
+      value: "8888"
     - name: SDN_CONTROLLER_USERNAME
-      value: ""
+      value: root"
     - name: SDN_CONTROLLER_PASSWORD
-      value: ""
+      value: "viavi"
 #    - name: CREDS_CLIENT_SECRET
 #      value: {{ .Values.esrapp.clientsecret }}
 #    - name: CREDS_CLIENT_ID

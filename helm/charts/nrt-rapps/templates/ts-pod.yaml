@@ -33,7 +33,7 @@ spec:
       containerPort: 80
     env:
     - name: USE_O1_SIMULATOR
-      value: "true"
+      value: "false"
     - name: VIAVI_ADDRESS
       value: "172.21.0.1"
     - name: VIAVI_PORT

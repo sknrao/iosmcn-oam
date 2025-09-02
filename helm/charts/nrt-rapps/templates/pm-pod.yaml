@@ -40,7 +40,7 @@ spec:
         fieldRef:
           fieldPath: metadata.namespace
     - name: JOB_PATH
-      value: "/config/jobDefinitionO1Simulator.json" #"/config/jobDefinition.json" # "/config/jobDefinitionO1Simulator.json"
+      value: "/config/jobDefinition.json" # "/config/jobDefinitionO1Simulator.json"
     - name: KAFKA_SERVER
       value: kafka-1-kafka-bootstrap.nonrtric
     - name: CONSUMER_PORT
