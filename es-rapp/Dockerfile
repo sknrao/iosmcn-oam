@@ -19,9 +19,15 @@ FROM python:3.10.12-slim
 
 WORKDIR /app
 
+RUN apt update && apt install -y vim
+
 COPY requirements.txt .
-RUN pip install -r /app/requirements.txt
+RUN pip install -r requirements.txt
 
 COPY main.py .
+
+# Create a non-root user and switch to it
+#RUN useradd -m nonroot
 #USER nonroot
+
 ENTRYPOINT ["python", "main.py"]

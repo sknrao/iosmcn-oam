@@ -1,4 +1,4 @@
-##TODO
+##TODO import TS algorithm stuff
 import random
 import requests
 import logging
@@ -46,6 +46,7 @@ class O1ManagerBase:
     def get_cell_id_from_name(self, name):
         raise NotImplementedError
 
+# is used for case when O1 IF simulator is used (https://github.com/o-ran-sc/sim-o1-ofhmp-interfaces)
 class O1SimulatorManager(O1ManagerBase): # NOTE: This is outdated now. Will probably need some adjustments in order to work
     def __init__(self):
         self.url_base = "http://controller:8181/rests/data/"
@@ -81,10 +82,6 @@ class O1SimulatorManager(O1ManagerBase): # NOTE: This is outdated now. Will prob
         print(requests.get(self.url.format(self.o1_simulator_node_id, cell_name), auth=(self.user, self.password), headers=self.headers, verify=False).json())
         # TODO float does not work, thus using int
         payload = {'_3gpp-nr-nrm-nrcelldu:ssbOffset': int(new_offset_value)}
-        #if current_state == 'UNLOCKED':
-        #    payload = {'_3gpp-nr-nrm-nrcelldu:administrativeState': 'LOCKED'}
-        #else:
-        #    payload = {'_3gpp-nr-nrm-nrcelldu:administrativeState': 'UNLOCKED'}
         log.info("path is: " + self.url.format(self.o1_simulator_node_id, cell_name))
         response = requests.put(self.url.format(self.o1_simulator_node_id, cell_name), auth=(self.user, self.password), json=payload)
         if not response.ok:
@@ -207,9 +204,13 @@ class ComputationWorker():
             self.o1_manager = ViaviManager()
         self.kafka_consumer = KafkaClient()
 
-       ##TODO
+        self.traffic_steering_rapp = TrafficSteeringRapp(
+          traffic_steering_algorithm_parameters=TrafficSteeringRAppAlgorithmParameters(
+          load_balancing_module=LoadBalancingTrafficSteeringRAppModuleParameters(),
+          inter_frequency_module=InterFrequencyTrafficSteeringRAppModuleParameters()
+          )
+        )
 
-    )
 
     def work(self):
         log.info("Starting ComputingWorker")
@@ -285,7 +286,11 @@ class ComputationWorker():
         else:
             log.info("Adding cells to TS")
             self.traffic_steering_rapp.update_cell_list(cell_ids, cell_frequencies)
-        ## TODO
+        # Run the algorithm and get offsets
+        offsets = self.traffic_steering_rapp.get_decision_cell_pair_specific(
+            timestamp_s=float(time),
+            cells_load=cell_loads,
+        )
         """
         Offsets set by the algorithm {cell_id: cell_individual_offset}
         """
