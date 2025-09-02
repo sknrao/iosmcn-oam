@@ -108,6 +108,7 @@ $ cat /etc/hosts
 
 ## Usage
 First, you need to build required Docker images, in this case, PM/TS/ES rApp images and/or VES-collector (config/ves-collector/Dockerfile). Pay attention on docker image names - they depend on the deployment type (docker vs k8s, local vs remote docker artifactory,...).
+
 NOTE: Since in RMI deployment, we had proprietary implementation of ES and TS rApp, I was able to push only supporting stuff for both rApps. The implementation itself needs to be provided separately.
 
 ### Bring Up Solution in Docker
@@ -148,6 +149,6 @@ Install script has takes two inputs: "--kubernetes-host=<ip>" - which is IP addr
 
 Install script for Kubernetes deploys same things in the same order as install script for Docker. But, there are small differencies:
 1. In case of Kind deployment, all file handling (config files, PVs, etc...) must be taken care of inside Kind docker containers. Also, docker images need to be pushed to Kind
-2. Helm charts are used instead of docker-compose. I used Smart5G charts (https://github.com/opennetworkinglab/smart5g-nonrtric-plt-ranpm/tree/master/install/helm) as an inspiration/template, with a couple of changes. The major one is using Bitnami's Keycloak helm chart, which uses Postgres. For that, I needed to add PVs.
+2. Helm charts are used instead of docker-compose. I used Smart5G charts ([repo link](https://github.com/opennetworkinglab/smart5g-nonrtric-plt-ranpm/tree/master/install/helm)) as an inspiration/template, with a couple of changes. The major one is using Bitnami's Keycloak helm chart, which uses Postgres. For that, I needed to add PVs.
 
 In order to bring down the solution, there is uninstall-helm.sh script. But, more often I was using restart_pm_rapps.sh script - because that is something you usually want to have updated.
