@@ -72,7 +72,7 @@ do not verify self signed certificates for HTTPS communication.
 export PYTHONWARNINGS="ignore:Unverified HTTPS request"
 ```
 
-### ETC Host (DNS function)
+### ETC Host (DNS function - not needed in K8S)
 
 Please change in the different .env files the environment variable 'HOST_IP'
 to the IP address of the system where you deploy the solution - search for 
@@ -107,8 +107,10 @@ $ cat /etc/hosts
 ```
 
 ## Usage
+First, you need to build required Docker images, in this case, PM/TS/ES rApp images and/or VES-collector (config/ves-collector/Dockerfile). Pay attention on docker image names - they depend on the deployment type (docker vs k8s, local vs remote docker artifactory,...).
+NOTE: Since in RMI deployment, we had proprietary implementation of ES and TS rApp, I was able to push only supporting stuff for both rApps. The implementation itself needs to be provided separately.
 
-### Bring Up Solution
+### Bring Up Solution in Docker
 
 1. First modify 2 environment variables by running the scripts
 ```
@@ -128,7 +130,24 @@ python3 adapt-to-environment.py -i <deployment-system-ipv4> -d <domain-name>
 ```
 ./pmrapp-setup.sh
 ```
-### Bring Down Solution
+
+In order to bring down the solution:
 ```
 ./docker-tear-down.sh
 ```
+
+### Bring Up Solution in Kubernetes
+There are two supported deployments - in standard Kubernetes and in Kind. In the current state of the installing script (install_helm.sh), Kind deployment is the newest and recently used in RMI deployment (kind_cluster.yaml). Deployment for standard Kubernetes was used a couple of months prior that, and was used mainly with O1 IF simulator (helm/o1-ofhmp-interface.yaml - [repo link](https://github.com/o-ran-sc/sim-o1-ofhmp-interfaces)). There should not be many differencies, but, one needs to be aware of that.
+
+In order to prepare for deployment, run prepare_for_k8s.sh. Next, in case of Kind deployment, I uploaded docker images to Kind beforehand, since I experienced it to be very slow - load_images_to_kind.sh
+
+Install script has takes two inputs: "--kubernetes-host=<ip>" - which is IP address of where the K8S cluster is running (in case of Kind, it is IP of Docker container called "<kind-name>-control-plane"); and "--kind" - which is optional and used if Kind deployment is used. For example:
+```
+./install_helm.sh  --kubernetes-host=172.21.0.3 --kind
+```
+
+Install script for Kubernetes deploys same things in the same order as install script for Docker. But, there are small differencies:
+1. In case of Kind deployment, all file handling (config files, PVs, etc...) must be taken care of inside Kind docker containers. Also, docker images need to be pushed to Kind
+2. Helm charts are used instead of docker-compose. I used Smart5G charts (https://github.com/opennetworkinglab/smart5g-nonrtric-plt-ranpm/tree/master/install/helm) as an inspiration/template, with a couple of changes. The major one is using Bitnami's Keycloak helm chart, which uses Postgres. For that, I needed to add PVs.
+
+In order to bring down the solution, there is uninstall-helm.sh script. But, more often I was using restart_pm_rapps.sh script - because that is something you usually want to have updated.
