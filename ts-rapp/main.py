@@ -211,7 +211,6 @@ class ComputationWorker():
           )
         )
 
-
     def work(self):
         log.info("Starting ComputingWorker")
         cell_info_set = False

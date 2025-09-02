@@ -25,11 +25,15 @@ The container expects the following environment variables:
 
 - APPNS : Should be the name of namespace.
 
-- KAFKA_SERVER : Host and port of the kafka bootstrap server.
+- KAFKA_SERVER : Host of the kafka bootstrap server. The port is separated: CONSUMER_PORT and PRODUCER_PORT
 
 - TOPIC : The kafka topic where data is delivered by the job.
 
 - ICS : Host and port to the information coordinator server.
+
+- JOB_PATH: holds job definition in JSON. Currently, we use two "/config/jobDefinition.json" - for Viavi deployment, and "/config/jobDefinitionO1Simulator.json" for O1 IF simulator.
+
+- FORWARD_TOPIC: name of topic for PM->TS/ES rApp communication.
 
 The remaining env vars are optional.
 
