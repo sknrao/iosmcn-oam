@@ -1,0 +1,17 @@
+{
+   "info_type_id": "PmDataOverKafka",
+   "job_id":"pmLogger",
+   "job_owner": "owner",
+   "job_definition": {
+      "filter": {
+         "sourceNames": [],
+         "measObjInstIds": [],
+         "measTypeSpecs": [],
+         "measuredEntityDns": []
+      },
+      "deliveryInfo": {
+         "topic": "pmreports",
+         "bootStrapServers": "kafka-1-kafka-bootstrap.nonrtric:9097"
+      }
+   }
+}

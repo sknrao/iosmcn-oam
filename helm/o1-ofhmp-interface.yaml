@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pynts
+  namespace: nonrtric
+  labels:
+    app: pynts
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pynts
+  template:
+    metadata:
+      labels:
+        app: pynts
+    spec:
+      containers:
+      - name: pynts
+        image: localhost:5000/pynts-o-du-o1:0.9.1
+        #command: ["sleep", "infinity"]
+        securityContext:
+           capabilities:
+              add: [ "IPC_LOCK", "NET_ADMIN", "SYS_ADMIN", "IPC_OWNER"]
+           privileged: true
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: ENDPOINT_COUNT
+          value: "1"
+        - name: NETCONF_USERNAME
+          value: netconf
+        - name: NETCONF_PASSWORD
+          value: netconf!
+        - name: O_DU_CALLHOME_PORT
+          value: "4335"
+        - name: SDNR_RESTCONF_URL
+          value: http://controller.nonrtric:8181
+        - name: SDNR_USERNAME
+          value: admin
+        - name: SDNR_PASSWORD
+          value: Kp8bJ4SXszM0WXlhak3eHlcse2gAw84vaoGGmJvUy2U
+        - name: VES_URL
+          value: http://ves-collector.nonrtric:8080/eventListener/v7
+        - name: VES_USERNAME
+          value: sample1
+        - name: VES_PASSWORD
+          value: sample1
+        volumeMounts:
+        - mountPath: /data
+          name: data-volume
+      volumes:
+      - name: data-volume
+        hostPath:
+          path: /tmp/sim-o1-ofhmp-interfaces/o-du-o1/data
+          type: Directory

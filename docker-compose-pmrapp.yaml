@@ -27,9 +27,12 @@ services:
     environment:
       APPID: pm-rapp
       APPNS: 'nonrtric'
-      KAFKA_SERVER: kafka:9092
+      KAFKA_SERVER: kafka
+      CONSUMER_PORT: '9092'
+      PRODUCER_PORT: '9092'
       ICS: ics:8083
       TOPIC: pmreports
+      ES_TOPIC: es-rapp-topic
       LOG_PAYLOAD: '1'
       GZIP: ''
       CREDS_GRANT_TYPE: client_credentials

@@ -17,22 +17,29 @@
 #  ============LICENSE_END=================================================
 #
 
-# args: <job-id> <job-index-suffix> [<access-token>]
+# args: <ics-ip> <job-id> <job-index-suffix> [<access-token>]
 # job file shall exist in file "".job.json"
 update_ics_job() {
 
-    ICS_PORT=8083
+    if [ -n "$1" ]; then
+    # Assign the input parameter to a local variable
+    ICS_ADDRESS="$1"
+        echo "ICS address (IP:PORT): $ICS_ADDRESS"
+    else
+        echo "ICS address does not exist."
+        exit 1
+    fi
     JOB=$(<.job.json)
     echo $JOB
     retcode=1
-    echo "Updating job $1"
+    echo "Updating job $2"
     while [ $retcode -ne 0 ]; do
-        if [ -z "$2" ]; then
+        if [ -z "$3" ]; then
             __bearer=""
         else
             __bearer="Authorization: Bearer $TOKEN"
         fi
-        STAT=$(curl -s -X PUT -w '%{http_code}' -H accept:application/json -H Content-Type:application/json http://localhost:$ICS_PORT/data-consumer/v1/info-jobs/$1 --data-binary @.job.json -H "$__bearer" )
+        STAT=$(curl -s -X PUT -w '%{http_code}' -H accept:application/json -H Content-Type:application/json http://$ICS_ADDRESS/data-consumer/v1/info-jobs/$2 --data-binary @.job.json -H "$__bearer" )
         retcode=$?
         echo "curl return code: $retcode"
         if [ $retcode -eq 0 ]; then

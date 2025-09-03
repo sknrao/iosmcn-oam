@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #  ============LICENSE_START===============================================
-#  Copyright (C) 2023 Nordix Foundation. All rights reserved.
+#  Copyright (C) 2023 Nordix Foundation and Tietoevry. All rights reserved.
 #  ========================================================================
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -19,18 +19,39 @@
 
 # Script intended to be sourced by other script to add functions to the keycloak rest API
 
-KC_URL=http://localhost:8462
+if [ -n "$KUBERNETES_HOST" ]; then
+    KC_PROXY_PORT=$(kubectl get svc -n nonrtric keycloak --output jsonpath='{.spec.ports[?(@.name=="http")].nodePort}')
+    KC_URL="$KUBERNETES_HOST:$KC_PROXY_PORT"
+    PASSWORD=$(kubectl get secret -n nonrtric keycloak -o jsonpath='{.data.admin-password}' | base64 --decode)
+    echo "Keycloak user password retrieved from secret is: $PASSWORD"
+    USER="user"
+else
+    KC_URL=http://localhost:8462
+    PASSWORD="admin"
+    USER="admin"
+fi
+
 echo "Keycloak url: "$KC_URL
 
 __get_admin_token() {
     echo "Get admin token"
-    ADMIN_TOKEN=""
+    ADMIN_TOKEN="" 
+    counter=0
     while [ "${#ADMIN_TOKEN}" -lt 20 ]; do
-        ADMIN_TOKEN=$(curl -s -X POST --max-time 2     "$KC_URL/realms/master/protocol/openid-connect/token"     -H "Content-Type: application/x-www-form-urlencoded"     -d "username=admin" -d "password=admin" -d 'grant_type=password' -d "client_id=admin-cli"  |  jq -r '.access_token')
+        ADMIN_TOKEN=$(curl --noproxy '*' -s -X POST --max-time 2 "$KC_URL/realms/master/protocol/openid-connect/token" -H "Content-Type: application/x-www-form-urlencoded" -d "username=$USER" -d "password=$PASSWORD" -d 'grant_type=password' -d "client_id=admin-cli"  |  jq -r '.access_token')
         if [ "${#ADMIN_TOKEN}" -lt 20 ]; then
             echo "Could not get admin token, retrying..."
             echo "Retrieved token: $ADMIN_TOKEN"
         fi
+        
+        if [ "$counter" -ge 50 ]; then
+            echo "Reached maximum number of tries (100). Exiting loop."
+            echo "The curl response from Keycloak is: "
+            curl -vvvvv --noproxy '*' -s -X POST --max-time 2 "$KC_URL/realms/master/protocol/openid-connect/token" -H "Content-Type: application/x-www-form-urlencoded" -d "username=$USER" -d "password=$PASSWORD" -d 'grant_type=password' -d "client_id=admin-cli"
+            break
+        fi
+        counter=$((counter + 1))
+        sleep 2
     done
     echo "Admin token: ${ADMIN_TOKEN:0:10}..."
     echo $ADMIN_TOKEN > .admin_token
@@ -62,7 +83,7 @@ decode_jwt() {
 list_realms() {
     echo "Listing all realms"
     __check_admin_token
-    curl -s \
+    curl --noproxy '*' -s \
         -X GET \
         -H "Authorization: Bearer ${ADMIN_TOKEN}" \
         "$KC_URL/admin/realms" | jq -r '.[].id' | indent2
@@ -72,7 +93,7 @@ delete_realms() {
     for realm in "$@"; do
         echo "Attempt to delete realm: $realm"
         __check_admin_token
-        curl -s \
+        curl --noproxy '*' -s \
         -X DELETE \
         -H "Authorization: Bearer ${ADMIN_TOKEN}" \
         "$KC_URL/admin/realms/$realm" | indent1
@@ -97,7 +118,7 @@ cat > .jsonfile1 <<- "EOF"
 EOF
         export __realm_name=$1
         envsubst < .jsonfile1 > .jsonfile2
-        curl -s \
+        curl --noproxy '*' -s \
         -X POST \
         -H "Authorization: Bearer ${ADMIN_TOKEN}" \
         -H "Content-Type: application/json" \
@@ -131,7 +152,7 @@ EOF
         __check_admin_token
         export __client_name=$1
         envsubst < .jsonfile1 > .jsonfile2
-        curl -s \
+        curl --noproxy '*' -s \
         -X POST \
         -H "Authorization: Bearer ${ADMIN_TOKEN}" \
         -H "Content-Type: application/json" \
@@ -147,7 +168,7 @@ EOF
 }
 
 __get_client_id() {
-    __client_data=$(curl -s \
+    __client_data=$(curl --noproxy '*' -s \
         -X GET \
         -H "Authorization: Bearer ${ADMIN_TOKEN}" \
         "$KC_URL/admin/realms/$1/clients?clientId=$2")
@@ -172,7 +193,7 @@ generate_client_secrets() {
         fi
         echo " Client id for client $1 in realm $__realm: "$__client_id | indent1
         echo "  Creating secret"
-        __client_secret=$(curl -s \
+        __client_secret=$(curl --noproxy '*' -s \
                 -X POST \
                 -H "Authorization: Bearer ${ADMIN_TOKEN}" \
                 "$KC_URL/admin/realms/$__realm/clients/$__client_id/client-secret")
@@ -180,7 +201,7 @@ generate_client_secrets() {
             echo "Command failed"
             exit 1
         fi
-        __client_secret=$(curl -s \
+        __client_secret=$(curl --noproxy '*' -s \
                 -X GET \
                 -H "Authorization: Bearer ${ADMIN_TOKEN}" \
                 "$KC_URL/admin/realms/$__realm/clients/$__client_id/client-secret")
@@ -215,7 +236,7 @@ cat > .jsonfile1 <<- "EOF"
 EOF
         export __role=$1
         envsubst < .jsonfile1 > .jsonfile2
-        curl -s \
+        curl --noproxy '*' -s \
         -X POST \
         -H "Authorization: Bearer ${ADMIN_TOKEN}" \
         -H "Content-Type: application/json" \
@@ -231,7 +252,7 @@ EOF
 
 __get_service_account_id() {
     # <realm-name> <client-id>
-    __service_account_data=$(curl -s \
+    __service_account_data=$(curl --noproxy '*' -s \
         -X GET \
         -H "Authorization: Bearer ${ADMIN_TOKEN}" \
         "$KC_URL/admin/realms/$1/clients/$2/service-account-user")
@@ -245,7 +266,7 @@ __get_service_account_id() {
 
 __get_client_available_role_id() {
     # <realm-name> <service-account-id> <client-id> <client-role-name>
-    __client_role_data=$(curl -s \
+    __client_role_data=$(curl --noproxy '*' -s \
         -X GET \
         -H "Authorization: Bearer ${ADMIN_TOKEN}" \
         "$KC_URL/admin/realms/$1/users/$2/role-mappings/clients/$3/available")
@@ -260,7 +281,7 @@ __get_client_available_role_id() {
 
 __get_client_mapped_role_id() {
     # <realm-name> <service-account-id> <client-id> <client-role-name>
-    __client_role_data=$(curl -s \
+    __client_role_data=$(curl --noproxy '*' -s \
         -X GET \
         -H "Authorization: Bearer ${ADMIN_TOKEN}" \
         "$KC_URL/admin/realms/$1/users/$2/role-mappings/clients/$3")
@@ -315,7 +336,7 @@ add_client_roles_mapping()  {
     echo "]" >> .jsonfile2
     echo "  Adding roles $__all_roles to client $__client in realm $__realm"
 
-    curl -s \
+    curl --noproxy '*' -s \
     -X POST \
     -H "Authorization: Bearer ${ADMIN_TOKEN}" \
     -H "Content-Type: application/json" \
@@ -372,7 +393,7 @@ remove_client_roles_mapping()  {
     echo "]" >> .jsonfile2
     echo "  Removing roles $__all_roles from client $__client in realm $__realm"
 
-    curl -s \
+    curl --noproxy '*' -s \
     -X DELETE \
     -H "Authorization: Bearer ${ADMIN_TOKEN}" \
     -H "Content-Type: application/json" \
@@ -416,7 +437,7 @@ add_client_hardcoded-claim-mapper() {
 }
 EOF
     envsubst < .jsonfile1 > .jsonfile2
-    curl -s \
+    curl --noproxy '*' -s \
     -X POST \
     -H "Authorization: Bearer ${ADMIN_TOKEN}" \
     -H "Content-Type: application/json" \
@@ -443,7 +464,7 @@ get_client_token() {
         exit 1
     fi
 
-    __client_secret=$(curl -s -f \
+    __client_secret=$(curl --noproxy '*' -s -f \
             -X GET \
             -H "Authorization: Bearer ${ADMIN_TOKEN}" \
             "$KC_URL/admin/realms/$__realm/clients/$__client_id/client-secret")
@@ -454,7 +475,7 @@ get_client_token() {
 
     __client_secret=$(echo $__client_secret | jq -r .value)
 
-	__TMP_TOKEN=$(curl -s -f -X POST $KC_URL/realms/$__realm/protocol/openid-connect/token   \
+	__TMP_TOKEN=$(curl --noproxy '*' -s -f -X POST $KC_URL/realms/$__realm/protocol/openid-connect/token   \
                   -H Content-Type:application/x-www-form-urlencoded \
                   -d client_id="$__client" -d client_secret="$__client_secret" -d grant_type=client_credentials)
 	if [ $? -ne 0 ]; then
